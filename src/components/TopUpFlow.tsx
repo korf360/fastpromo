@@ -90,8 +90,8 @@ export function TopUpFlow() {
   }
 
   return (
-    <section
-      className="relative mx-auto max-w-6xl px-4 pb-36 pt-2 sm:px-6 lg:px-8 lg:pb-40"
+    <div
+      className="relative mx-auto max-w-6xl pb-36 pt-8 sm:pb-40"
       aria-label="Top-up flow"
     >
       <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
@@ -258,7 +258,7 @@ export function TopUpFlow() {
       )}
 
       <IdGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
-    </section>
+    </div>
   );
 }
 

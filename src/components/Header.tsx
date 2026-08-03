@@ -1,9 +1,16 @@
 const DISCORD_URL = "https://discord.gg/fastpromo";
 
+const NAV = [
+  { href: "#why", label: "Why FastPromo" },
+  { href: "#how", label: "How it works" },
+  { href: "#top-up", label: "Top-Up" },
+  { href: "#support", label: "Support" },
+];
+
 export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0d0f12]/80 backdrop-blur-xl transition-all duration-300">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
         <a
           href="/"
           className="font-[family-name:var(--font-cinzel)] text-xl font-semibold tracking-wide text-[#FFD700] transition-all duration-300 hover:brightness-110 sm:text-2xl"
@@ -12,22 +19,35 @@ export function Header() {
           FastPromo
         </a>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <nav
+          className="hidden items-center gap-6 lg:flex"
+          aria-label="Primary"
+        >
+          {NAV.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="text-sm text-white/55 transition-all duration-300 hover:text-[#FFD700] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700]"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2 sm:gap-3">
           <span
-            className="hidden items-center gap-1.5 rounded-md border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1 text-xs font-medium text-[#FFD700] sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-md border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1 text-xs font-medium text-[#FFD700] md:inline-flex"
             role="status"
           >
-            <span aria-hidden="true">⚡</span>
             5-Sec Delivery
           </span>
-          <span
-            className="inline-flex items-center gap-1 rounded-md border border-[#FFD700]/25 bg-[#FFD700]/10 px-2 py-1 text-[10px] font-medium text-[#FFD700] sm:hidden"
-            role="status"
-            aria-label="5-second delivery"
+
+          <a
+            href="#top-up"
+            className="hidden rounded-lg bg-[#FFD700] px-3.5 py-2 text-sm font-bold text-[#0d0f12] transition-all duration-300 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
           >
-            <span aria-hidden="true">⚡</span>
-            5-Sec
-          </span>
+            Buy Diamonds
+          </a>
 
           <a
             href={DISCORD_URL}
@@ -36,8 +56,7 @@ export function Header() {
             className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white transition-all duration-300 hover:border-[#5865F2]/50 hover:bg-[#5865F2]/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700]"
           >
             <DiscordIcon className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">Join Discord</span>
-            <span className="sm:hidden">Discord</span>
+            <span className="hidden sm:inline">Discord</span>
           </a>
         </div>
       </div>
