@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FastPromo — Web (Next.js) + Discord bot
 
-## Getting Started
+## Deploy web on Vercel
 
-First, run the development server:
+The Next.js shop lives at the **repo root**. The Discord bot in `/bot` is deployed separately on Railway.
+
+### Option A — Dashboard (recommended)
+
+1. Push this repo to GitHub.
+2. Go to [vercel.com/new](https://vercel.com/new) → **Import** the repo.
+3. Framework: **Next.js** (auto-detected). Root Directory: `.` (leave default).
+4. Add Environment Variables (Production + Preview):
+
+| Variable | Notes |
+|---|---|
+| `STRIPE_SECRET_KEY` | `sk_live_...` or test |
+| `STRIPE_WEBHOOK_SECRET` | from Stripe webhook endpoint |
+| `NEXT_PUBLIC_SITE_URL` | `https://your-app.vercel.app` (update after first deploy) |
+| `MOOGOLD_PARTNER_ID` | partner id |
+| `MOOGOLD_SECRET_KEY` | API secret |
+| `MOOGOLD_CATEGORY_ID` | usually `50` |
+| `MOOGOLD_SKU_MLBB_*` | product SKUs |
+| `DISCORD_WEBHOOK_URL` | optional logs webhook |
+| `DISCORD_ADMIN_ROLE_ID` / `DISCORD_ADMIN_USER_ID` | optional |
+| `BOT_WEBHOOK_URL` | Railway bot URL, e.g. `https://xxx.up.railway.app` |
+| `INTERNAL_WEBHOOK_SECRET` | same secret as Railway bot |
+
+5. Deploy.
+6. Set `NEXT_PUBLIC_SITE_URL` to the real Vercel URL and redeploy.
+7. In Stripe → Webhooks → endpoint:
+   `https://your-app.vercel.app/api/webhook`
+   Event: `checkout.session.completed`
+
+### Option B — CLI
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx vercel login
+npx vercel        # preview
+npx vercel --prod # production
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Region
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`vercel.json` targets **fra1** (Frankfurt) for the EU market.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Discord bot
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [`bot/README.md`](bot/README.md) for Railway.

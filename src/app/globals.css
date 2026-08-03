@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0d0f12;
+  --foreground: #ffffff;
+  --gold: #ffd700;
+  --gold-dim: #c9a800;
+  --surface: #14171c;
+  --surface-elevated: #1a1e25;
+  --border: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-gold: var(--gold);
+  --color-gold-dim: var(--gold-dim);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --font-sans: var(--font-outfit);
+  --font-display: var(--font-cinzel);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-outfit), system-ui, sans-serif;
+}
+
+/* Atmospheric gaming backdrop */
+.bg-gaming {
+  background-color: #0d0f12;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 215, 0, 0.07), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(255, 215, 0, 0.03), transparent),
+    radial-gradient(ellipse 50% 30% at 0% 80%, rgba(100, 120, 160, 0.06), transparent),
+    linear-gradient(180deg, #0d0f12 0%, #0a0c0f 100%);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Gold focus glow for inputs */
+.input-gold:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow:
+    0 0 0 1px #ffd700,
+    0 0 20px rgba(255, 215, 0, 0.25);
+}
+
+/* Package selected state */
+.package-selected {
+  border-color: #ffd700;
+  box-shadow:
+    0 0 0 1px #ffd700,
+    0 0 24px rgba(255, 215, 0, 0.2);
+  transform: scale(1.03);
+}
+
+/* Modal overlay */
+.modal-overlay {
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modal-panel {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.checkout-bar-enter {
+  animation: slideUp 0.35s ease-out;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
