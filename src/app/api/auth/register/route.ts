@@ -2,15 +2,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/cashback";
+import { strongPasswordSchema } from "@/lib/password";
 
 const registerSchema = z.object({
   email: z.string().email().max(254),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128)
-    .regex(/[A-Za-z]/, "Password must include a letter")
-    .regex(/[0-9]/, "Password must include a number"),
+  password: strongPasswordSchema,
   name: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -20,7 +16,10 @@ export async function POST(request: Request) {
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." },
+        {
+          ok: false,
+          error: parsed.error.issues[0]?.message ?? "Invalid input.",
+        },
         { status: 400 }
       );
     }

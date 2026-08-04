@@ -3,10 +3,14 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/cashback";
+import {
+  getPasswordStrengthError,
+  strongPasswordSchema,
+} from "@/lib/password";
 
 const schema = z.object({
-  currentPassword: z.string().min(8).max(128),
-  newPassword: z.string().min(8).max(128),
+  currentPassword: z.string().min(1).max(128),
+  newPassword: strongPasswordSchema,
 });
 
 export async function PATCH(request: Request) {
@@ -28,7 +32,13 @@ export async function PATCH(request: Request) {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json(
-      { ok: false, error: "Passwords must be 8–128 characters." },
+      {
+        ok: false,
+        error:
+          parsed.error.issues[0]?.message ??
+          getPasswordStrengthError(String((raw as { newPassword?: string })?.newPassword ?? "")) ??
+          "Invalid password.",
+      },
       { status: 400 }
     );
   }

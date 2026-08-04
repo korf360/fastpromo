@@ -2,6 +2,11 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  getPasswordStrengthError,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_HINT,
+} from "@/lib/password";
 
 type Props = {
   initialName: string;
@@ -55,6 +60,12 @@ export function AccountSettings({ initialName, email }: Props) {
 
     if (newPassword !== confirmPassword) {
       setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    const strengthError = getPasswordStrengthError(newPassword);
+    if (strengthError) {
+      setPasswordError(strengthError);
       return;
     }
 
@@ -143,7 +154,7 @@ export function AccountSettings({ initialName, email }: Props) {
             Security
           </h3>
           <p className="mt-1 text-xs text-white/35">
-            Change your password (minimum 8 characters)
+            {PASSWORD_REQUIREMENTS_HINT}
           </p>
         </div>
         <label className="block">
@@ -152,7 +163,7 @@ export function AccountSettings({ initialName, email }: Props) {
             type="password"
             autoComplete="current-password"
             required
-            minLength={8}
+            minLength={1}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             className="input-gold w-full rounded-lg border border-white/10 bg-[#0d0f12] px-3 py-3 text-base text-white"
@@ -164,7 +175,8 @@ export function AccountSettings({ initialName, email }: Props) {
             type="password"
             autoComplete="new-password"
             required
-            minLength={8}
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={128}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             className="input-gold w-full rounded-lg border border-white/10 bg-[#0d0f12] px-3 py-3 text-base text-white"
@@ -176,7 +188,8 @@ export function AccountSettings({ initialName, email }: Props) {
             type="password"
             autoComplete="new-password"
             required
-            minLength={8}
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={128}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="input-gold w-full rounded-lg border border-white/10 bg-[#0d0f12] px-3 py-3 text-base text-white"

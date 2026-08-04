@@ -1,10 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleSignInButton } from "./GoogleSignInButton";
+import {
+  getPasswordStrengthError,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_HINT,
+} from "@/lib/password";
 
 type Props = {
   googleEnabled?: boolean;
@@ -19,13 +24,30 @@ export function RegisterForm({ googleEnabled = false }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const strengthError = useMemo(
+    () => (password ? getPasswordStrengthError(password) : null),
+    [password]
+  );
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    const policyError = getPasswordStrengthError(password);
+    if (policyError) {
+      setError(policyError);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
 
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -130,15 +152,45 @@ export function RegisterForm({ googleEnabled = false }: Props) {
             id="password"
             type="password"
             required
-            minLength={8}
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={128}
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            aria-describedby="password-hint"
             className="input-gold w-full rounded-xl border border-white/10 bg-[#0d0f12] px-4 py-3.5 text-base text-white"
           />
-          <p className="mt-1.5 text-xs text-white/40">
-            At least 8 characters, including a letter and a number.
+          <p id="password-hint" className="mt-1.5 text-xs text-white/40">
+            {PASSWORD_REQUIREMENTS_HINT}
           </p>
+          {password.length > 0 && strengthError && (
+            <p className="mt-1 text-xs text-amber-300/90">{strengthError}</p>
+          )}
+          {password.length > 0 && !strengthError && (
+            <p className="mt-1 text-xs text-emerald-300/90">Password looks strong.</p>
+          )}
+        </div>
+        <div>
+          <label
+            htmlFor="confirm-password"
+            className="mb-2 block text-sm text-white/70"
+          >
+            Confirm password
+          </label>
+          <input
+            id="confirm-password"
+            type="password"
+            required
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={128}
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input-gold w-full rounded-xl border border-white/10 bg-[#0d0f12] px-4 py-3.5 text-base text-white"
+          />
+          {confirmPassword.length > 0 && password !== confirmPassword && (
+            <p className="mt-1 text-xs text-amber-300/90">Passwords do not match.</p>
+          )}
         </div>
 
         {error && (
