@@ -17,10 +17,12 @@ import {
   PRODUCT_CATALOG,
   formatEuroFromCents,
   isProductId,
+  DIAMOND_MARK,
 } from "../lib/products.js";
 import { startGiveaway } from "./giveaway.js";
 import { upsertStatusEmbed } from "./status.js";
 import { parseDurationMs, sanitizePlayerId } from "../utils/sanitize.js";
+import { resolvePublicShopUrl } from "../utils/shopUrl.js";
 
 /**
  * @param {string} clientId
@@ -153,30 +155,79 @@ export function registerCommandHandlers(client, ctx) {
  * @param {string} siteUrl
  */
 async function cmdPrices(interaction, siteUrl) {
-  const lines = Object.entries(PRODUCT_CATALOG).map(
-    ([id, p]) => `• **${p.name}** — ${formatEuroFromCents(p.priceInCents)}`
-  );
+  const shop = resolvePublicShopUrl(siteUrl);
+
+  const packLines = [];
+  const passLines = [];
+
+  for (const p of Object.values(PRODUCT_CATALOG)) {
+    const price = `**${formatEuroFromCents(p.priceInCents)}**`;
+    const badge = p.badge ? ` · *${p.badge}*` : "";
+
+    if (typeof p.diamonds === "number") {
+      const qty = p.diamonds.toLocaleString("en-GB");
+      packLines.push(
+        `${DIAMOND_MARK} **${qty}** Diamonds — ${price}${badge}`
+      );
+    } else {
+      passLines.push(`✦ **${p.name}** — ${price}${badge}`);
+    }
+  }
+
+  const description = [
+    "**Diamond packs**",
+    ...packLines,
+    "",
+    "**Passes**",
+    ...passLines,
+    "",
+    "Secure Stripe checkout · Instant delivery to your player ID.",
+  ].join("\n");
 
   const embed = new EmbedBuilder()
     .setColor(0xffd700)
     .setTitle("FastPromo · Prices")
-    .setDescription(
-      `${lines.join("\n")}\n\nInstant delivery via official API gateways.`
-    )
+    .setDescription(description)
     .setFooter({ text: "Prices in EUR · European market" });
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setLabel("Open Shop")
-      .setStyle(ButtonStyle.Link)
-      .setURL(siteUrl)
-  );
+  if (shop) {
+    embed.setURL(`${shop}/packages`);
+    embed.setThumbnail(`${shop}/discord/bot-icon-f-diamond.png`);
+  }
 
-  await interaction.reply({
-    embeds: [embed],
-    components: [row],
-    ephemeral: true,
-  });
+  /** @type {import('discord.js').ActionRowBuilder[]} */
+  const components = [];
+  if (shop) {
+    components.push(
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel("Open shop")
+          .setStyle(ButtonStyle.Link)
+          .setURL(`${shop}/packages`)
+      )
+    );
+  }
+
+  try {
+    await interaction.reply({
+      embeds: [embed],
+      components,
+      ephemeral: true,
+    });
+  } catch (err) {
+    // Link/thumbnail URL issues must not hide the price list.
+    console.error("[prices] rich reply failed, falling back:", err);
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xffd700)
+          .setTitle("FastPromo · Prices")
+          .setDescription(description)
+          .setFooter({ text: "Prices in EUR · European market" }),
+      ],
+      ephemeral: true,
+    });
+  }
 }
 
 /**

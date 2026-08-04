@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
+import { resolvePublicShopUrl } from "./utils/shopUrl.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "../..");
@@ -37,11 +38,9 @@ export function loadEnv() {
     );
   }
 
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
-    "http://localhost:3000"
-  ).replace(/\/$/, "");
+  const siteUrl = resolvePublicShopUrl(
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL
+  );
 
   // Railway injects PORT; BOT_PORT is for local side-by-side with Next.js
   const port = Number(process.env.PORT || process.env.BOT_PORT || 3001);

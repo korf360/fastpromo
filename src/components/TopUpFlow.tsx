@@ -454,7 +454,19 @@ export function TopUpFlow() {
                       {pkg.badge}
                     </span>
                   )}
-                  <span className="text-sm font-bold leading-snug text-white sm:text-base">
+                  <span className="flex items-center gap-1.5 text-sm font-bold leading-snug text-white sm:text-base">
+                    {pkg.diamonds != null && (
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 shrink-0 text-[#FFD700] sm:h-[1.125rem] sm:w-[1.125rem]"
+                      >
+                        <path
+                          fill="currentColor"
+                          d="M12 2.2 3.8 9.5 12 21.8l8.2-12.3L12 2.2Zm0 2.7 5.2 4.6H6.8L12 4.9Zm-5.7 6.2h11.4L12 19.1 6.3 11.1Z"
+                        />
+                      </svg>
+                    )}
                     {pkg.label}
                   </span>
                   <span className="mt-auto pt-2 text-base font-semibold text-[#FFD700] sm:text-lg">
