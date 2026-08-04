@@ -1,0 +1,14 @@
+# FastPromo Discord bot on Railway (repo root = monorepo).
+# Overrides Next.js auto-detection so this service runs the bot, not the shop.
+# The shop is deployed on Vercel.
+
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm install --prefix bot"
+
+[deploy]
+startCommand = "npm run start --prefix bot"
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
