@@ -1,0 +1,12 @@
+# Force Nixpacks to treat this Railway service as the Discord bot.
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm install --prefix bot"]
+
+[phases.build]
+cmds = ["node -e \"console.log('bot service — skip next build')\""]
+
+[start]
+cmd = "npm run start --prefix bot"
