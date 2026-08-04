@@ -5,11 +5,11 @@ import { useState } from "react";
 
 type Props = {
   callbackUrl: string;
+  enabled?: boolean;
 };
 
-export function GoogleSignInButton({ callbackUrl }: Props) {
+export function GoogleSignInButton({ callbackUrl, enabled = false }: Props) {
   const [loading, setLoading] = useState(false);
-  const enabled = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true";
 
   if (!enabled) return null;
 
@@ -21,7 +21,7 @@ export function GoogleSignInButton({ callbackUrl }: Props) {
         setLoading(true);
         void signIn("google", { callbackUrl });
       }}
-      className="mt-3 flex min-h-11 w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white px-4 py-3.5 text-sm font-semibold text-[#1f1f1f] transition-all duration-300 hover:bg-white/90 disabled:opacity-60"
+      className="flex min-h-11 w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white px-4 py-3.5 text-sm font-semibold text-[#1f1f1f] transition-all duration-300 hover:bg-white/90 disabled:opacity-60"
     >
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
         <path
@@ -38,7 +38,7 @@ export function GoogleSignInButton({ callbackUrl }: Props) {
         />
         <path
           fill="#1976D2"
-          d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l.0.0 6.2 5.2C39.2 36.9 44 32 44 24c0-1.2-.1-2.3-.4-3.5z"
+          d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.2 5.2C39.2 36.9 44 32 44 24c0-1.2-.1-2.3-.4-3.5z"
         />
       </svg>
       {loading ? "Redirecting…" : "Continue with Google"}

@@ -6,11 +6,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleSignInButton } from "./GoogleSignInButton";
 
-export function RegisterForm() {
+type Props = {
+  googleEnabled?: boolean;
+};
+
+export function RegisterForm({ googleEnabled = false }: Props) {
   const router = useRouter();
   const search = useSearchParams();
   const callbackUrl = search.get("next") || "/account";
-  const googleOn = process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true";
+  const googleOn = googleEnabled;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -74,7 +78,7 @@ export function RegisterForm() {
       </p>
 
       <div className="mt-8">
-        <GoogleSignInButton callbackUrl={callbackUrl} />
+        <GoogleSignInButton callbackUrl={callbackUrl} enabled={googleOn} />
       </div>
 
       {googleOn && (
