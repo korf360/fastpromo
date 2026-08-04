@@ -506,7 +506,7 @@ export function TopUpFlow() {
                     )}
                     {pkg.label}
                   </span>
-                  <span className="mt-auto pt-2 text-base font-semibold text-[#FFD700] sm:text-lg">
+                  <span className="mt-auto pt-2 text-base font-semibold tabular-nums tracking-tight text-white/90 sm:text-lg">
                     {formatEuro(pkg.price)}
                   </span>
                 </button>
