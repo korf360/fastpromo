@@ -459,11 +459,48 @@ export function TopUpFlow() {
                       <svg
                         aria-hidden
                         viewBox="0 0 24 24"
-                        className="h-4 w-4 shrink-0 text-[#FFD700] sm:h-[1.125rem] sm:w-[1.125rem]"
+                        className="h-4 w-4 shrink-0 sm:h-[1.125rem] sm:w-[1.125rem]"
                       >
+                        <defs>
+                          <linearGradient
+                            id={`diamond-pack-${pkg.id}`}
+                            x1="12"
+                            y1="2"
+                            x2="12"
+                            y2="22"
+                            gradientUnits="userSpaceOnUse"
+                          >
+                            <stop stopColor="#7dd3fc" />
+                            <stop offset="0.45" stopColor="#38bdf8" />
+                            <stop offset="1" stopColor="#0284c7" />
+                          </linearGradient>
+                        </defs>
+                        {/* Faceted gem — classic cut, blue */}
                         <path
-                          fill="currentColor"
-                          d="M12 2.2 3.8 9.5 12 21.8l8.2-12.3L12 2.2Zm0 2.7 5.2 4.6H6.8L12 4.9Zm-5.7 6.2h11.4L12 19.1 6.3 11.1Z"
+                          fill={`url(#diamond-pack-${pkg.id})`}
+                          d="M12 2.5 3.5 9.2l8.5 12.3 8.5-12.3L12 2.5Z"
+                        />
+                        <path
+                          fill="#e0f2fe"
+                          fillOpacity="0.55"
+                          d="M12 2.5 7.2 9.2h9.6L12 2.5Z"
+                        />
+                        <path
+                          fill="#0369a1"
+                          fillOpacity="0.35"
+                          d="M3.5 9.2h8.5v12.3L3.5 9.2Z"
+                        />
+                        <path
+                          fill="#0ea5e9"
+                          fillOpacity="0.45"
+                          d="M12 9.2h8.5L12 21.5V9.2Z"
+                        />
+                        <path
+                          fill="none"
+                          stroke="#bae6fd"
+                          strokeOpacity="0.7"
+                          strokeWidth="0.6"
+                          d="M7.2 9.2h9.6M12 2.5v6.7M3.5 9.2 12 21.5 20.5 9.2"
                         />
                       </svg>
                     )}
