@@ -32,11 +32,11 @@ export default function FaqPage() {
     },
     {
       q: "How fast is delivery?",
-      a: "Most orders deliver within seconds after Stripe confirms payment. Occasional supplier or game-side delays can take longer. If nothing arrives after a few minutes, open a Discord ticket or email us with your Stripe session ID or receipt. See Status for operational notes.",
+      a: "Most orders deliver within seconds after Stripe confirms payment. Occasional supplier or game-side delays can take longer. If nothing arrives after a few minutes, open a Discord ticket and paste your Support ID (FP-…) from Account → Purchase activity. See Status for operational notes.",
     },
     {
       q: "What if payment succeeded but I got no diamonds?",
-      a: "Wait a few minutes first. Then contact Discord support or email us with your Stripe session ID (cs_…) or receipt number. We investigate failed fulfillments and re-deliver or refund as appropriate. Do not enter a different ID and reorder without checking with support.",
+      a: "Wait a few minutes first. Then open Discord support and paste your Support ID from Account → Purchase activity (looks like FP-2026-ABCD1234). Staff use /order with that ID to check your purchase. Do not enter a different ID and reorder without checking with support.",
     },
     {
       q: "Can I get a refund?",
@@ -55,8 +55,12 @@ export default function FaqPage() {
       a: "FastPromo targets European players with EUR pricing. Use the correct Global / region ID for your in-game account. If you are unsure your zone is supported, ask on Discord before ordering.",
     },
     {
+      q: "What is my Support ID?",
+      a: "Each purchase on your FastPromo account gets a Support ID like FP-2026-ABCD1234 (Account → Purchase activity, or on your receipt). If you need help, paste that ID in a Discord ticket. Staff run /order with it to see status, product, player ID, and payment for that exact top-up.",
+    },
+    {
       q: "How do I get support?",
-      a: `Primary support is on Discord (${DISCORD_SUPPORT_URL.replace("https://", "")}). You can also email ${merchant.supportEmail}. Include your order receipt or Stripe session ID so we can look up the payment quickly.`,
+      a: `Primary support is on Discord (${DISCORD_SUPPORT_URL.replace("https://", "")}). You can also email ${merchant.supportEmail}. Always include your Support ID (FP-…) from Account → Purchase activity so we can look up the order instantly.`,
     },
     {
       q: "Are you affiliated with the game publisher?",

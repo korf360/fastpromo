@@ -20,7 +20,7 @@ npm start        # Discord client + Express webhook server
 | Command | Who | Action |
 |---|---|---|
 | `/prices` | Everyone | Catalog embed + shop link |
-| `/order [transaction_id]` | Everyone | Stripe session status via web API |
+| `/order [transaction_id]` | Everyone | Lookup by support ID `FP-…` (account page) or Stripe `cs_…` |
 | `/topup` | Everyone | Modal → package select → Stripe checkout link |
 | `/status` | Admin | Update `✦｜sᴇʀᴠᴇʀ-sᴛᴀᴛᴜs` |
 | `/giveaway` | Admin | Timed giveaway in events channel |

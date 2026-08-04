@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 import { loadEnv } from "./env.js";
 import { registerBroadcastHandlers, setupGuild } from "./setupGuild.js";
-import { registerTicketHandlers } from "./features/tickets.js";
+import { registerTicketHandlers, deployTicketPanel } from "./features/tickets.js";
 import { registerRankHandlers } from "./features/ranks.js";
 import {
   registerCommandHandlers,
@@ -50,6 +50,15 @@ async function main() {
       await registerSlashCommands(env.clientId, env.token);
     } catch (err) {
       console.error("❌ Slash command registration failed:", err);
+    }
+
+    // Refresh support ticket panel copy (Support ID instructions) without full setup.
+    try {
+      const guild = await client.guilds.fetch(env.guildId);
+      await guild.channels.fetch();
+      await deployTicketPanel(guild);
+    } catch (err) {
+      console.warn("⚠ Could not refresh ticket panel:", err);
     }
 
     const shouldBootstrap = process.env.DISCORD_AUTO_SETUP === "true";

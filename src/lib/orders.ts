@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculateCashbackEarned } from "@/lib/cashback";
 import { recordOrderPaymentInLedger } from "@/lib/finance";
+import { buildReceiptNumber } from "@/lib/receipt";
 
 type RecordOrderInput = {
   authUserId: string;
@@ -74,11 +75,21 @@ export async function recordOrderAndCashback(input: RecordOrderInput) {
           },
         });
 
+    // Always assign a shareable support ID (FP-YYYY-XXXXXXXX) for Discord /account.
+    let order = orderRow;
+    if (!order.receiptNumber) {
+      const receiptNumber = buildReceiptNumber(order.id, order.createdAt);
+      order = await tx.order.update({
+        where: { id: order.id },
+        data: { receiptNumber },
+      });
+    }
+
     if (!alreadySettled) {
       const user = await tx.user.findUnique({
         where: { id: input.authUserId },
       });
-      if (!user) return orderRow;
+      if (!user) return order;
 
       let nextBalance = user.cashbackCents;
 
@@ -160,7 +171,7 @@ export async function recordOrderAndCashback(input: RecordOrderInput) {
       });
     }
 
-    return orderRow;
+    return order;
   });
 }
 

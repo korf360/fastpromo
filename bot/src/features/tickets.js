@@ -28,20 +28,15 @@ export async function deployTicketPanel(guild) {
     throw new Error(`Channel ${CHANNEL_NAMES.supportTickets} not found.`);
   }
 
-  const messages = await channel.messages.fetch({ limit: 20 });
-  const existing = messages.find((m) => messageHasCustomId(m, IDS.openTicket));
-  if (existing) {
-    console.log(`  ↪ ticket panel exists in ${channel.name}`);
-    return existing;
-  }
-
   const embed = new EmbedBuilder()
     .setColor(0x22c55e)
     .setTitle("FastPromo Support")
     .setDescription(
-      "Need help with a top-up, payment, or account delivery?\n\n" +
-        "Click **Open Support Ticket** to create a private channel with our staff. " +
-        "Please include your User ID, Zone ID, and order details when the ticket opens."
+      "Need help with a top-up, payment, or delivery?\n\n" +
+        "Click **Open Support Ticket** for a private channel with staff.\n\n" +
+        "**Before you write:** copy your **Support ID** from the shop " +
+        "(Account → Purchase activity — looks like `FP-2026-ABCD1234`) " +
+        "and paste it in the ticket. Staff use `/order` with that ID to review your purchase."
     )
     .setFooter({ text: "✦｜sᴜᴘᴘᴏʀᴛ-ᴛɪᴄᴋᴇᴛs · typically replies within minutes" });
 
@@ -51,6 +46,14 @@ export async function deployTicketPanel(guild) {
       .setLabel("📩 Open Support Ticket")
       .setStyle(ButtonStyle.Success)
   );
+
+  const messages = await channel.messages.fetch({ limit: 20 });
+  const existing = messages.find((m) => messageHasCustomId(m, IDS.openTicket));
+  if (existing) {
+    await existing.edit({ embeds: [embed], components: [row] });
+    console.log(`  ↪ ticket panel updated in ${channel.name}`);
+    return existing;
+  }
 
   const sent = await channel.send({ embeds: [embed], components: [row] });
   console.log(`  + ticket panel deployed in ${channel.name}`);
@@ -195,8 +198,9 @@ async function handleOpenTicket(interaction, adminRoleId) {
     .setDescription(
       `Welcome <@${user.id}>.\n\n` +
         "Please describe your issue and include:\n" +
+        "• **Support ID** from the shop — Account → Purchase activity " +
+        "(looks like `FP-2026-ABCD1234`). Staff will run `/order` with it.\n" +
         "• In-game **User ID** & **Zone ID**\n" +
-        "• Stripe / order reference (if any)\n" +
         "• Screenshots of the problem\n\n" +
         "Staff will assist you here shortly."
     )

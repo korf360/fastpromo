@@ -73,8 +73,15 @@ export default async function ReceiptPage({ params }: Props) {
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-[#101828]">{docTitle}</h1>
         <p className="mt-2 text-sm text-[#667085]">
-          Issued {issued} UTC · Receipt{" "}
+          Issued {issued} UTC · Support ID{" "}
           <span className="font-semibold text-[#101828]">{receiptNumber}</span>
+          <span className="mt-2 block rounded border border-[#f2e8c9] bg-[#fffbeb] px-3 py-2 text-xs leading-relaxed text-[#667085]">
+            <strong className="text-[#101828]">Support ID for Discord:</strong>{" "}
+            if you need help with this top-up, paste{" "}
+            <span className="font-mono text-[#101828]">{receiptNumber}</span> in a
+            Discord ticket. Staff use <span className="font-mono">/order</span>{" "}
+            with this code to review your purchase.
+          </span>
         </p>
 
         <div className="mt-8 grid gap-6 text-sm text-[#344054] sm:grid-cols-2">

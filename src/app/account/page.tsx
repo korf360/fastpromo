@@ -3,8 +3,11 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { formatCents, getCashbackPercent, getCashbackWalletCoverPercent } from "@/lib/cashback-config";
+import { buildReceiptNumber } from "@/lib/receipt";
+import { DISCORD_SUPPORT_URL } from "@/lib/site";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CopySupportId } from "@/components/CopySupportId";
 import {
   AccountSettings,
   OrderStatusBadge,
@@ -75,6 +78,23 @@ export default async function AccountPage() {
   const totalEarnedCents = earnedAgg._sum.amountCents ?? 0;
   const totalRedeemedCents = Math.abs(redeemedAgg._sum.amountCents ?? 0);
   const totalOrders = await prisma.order.count({ where: { userId: user.id } });
+
+  // Backfill shareable support IDs for older orders.
+  const ordersWithSupportId = await Promise.all(
+    user.orders.map(async (order) => {
+      if (order.receiptNumber) return order;
+      const receiptNumber = buildReceiptNumber(order.id, order.createdAt);
+      try {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { receiptNumber },
+        });
+      } catch {
+        // Unique race — still show the computed ID.
+      }
+      return { ...order, receiptNumber };
+    })
+  );
 
   return (
     <>
@@ -425,23 +445,52 @@ export default async function AccountPage() {
 
           <section className="mt-12" aria-labelledby="orders-heading">
             <h2 id="orders-heading" className="text-xl font-semibold text-white">
-              Purchase history
+              Purchase activity
             </h2>
             <p className="mt-1 text-sm text-white/45">
-              Player ID is entered per order so you can gift diamonds to friends anytime
+              Your top-ups, status, and a support ID for each order.
             </p>
-            {user.orders.length === 0 ? (
+
+            <div className="mt-4 border border-[#FFD700]/25 bg-[#FFD700]/[0.06] px-5 py-4">
+              <p className="text-sm font-semibold text-[#FFD700]">
+                What is the Support ID?
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-white/65">
+                Every purchase gets a unique code like{" "}
+                <span className="font-mono text-white/85">FP-2026-ABCD1234</span>.
+                If something goes wrong (payment ok but no diamonds, wrong amount,
+                delay), open a{" "}
+                <a
+                  href={DISCORD_SUPPORT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#FFD700] underline-offset-2 hover:underline"
+                >
+                  Discord support ticket
+                </a>{" "}
+                and paste that ID. Staff run{" "}
+                <span className="font-mono text-white/80">/order</span> with it to
+                pull up your exact order — status, product, player ID, and payment
+                — without digging through Stripe.
+              </p>
+              <p className="mt-2 text-xs text-white/40">
+                Tip: tap <span className="text-white/55">Copy</span> next to the ID,
+                then paste it in your ticket message.
+              </p>
+            </div>
+
+            {ordersWithSupportId.length === 0 ? (
               <div className="mt-4 border border-dashed border-white/10 px-5 py-8 text-sm text-white/50">
                 No orders yet.{" "}
                 <Link href="/packages" className="text-[#FFD700] hover:underline">
                   Place your first top-up
                 </Link>
-                .
+                . After checkout, your Support ID will appear here for Discord help.
               </div>
             ) : (
               <>
                 <div className="mt-4 space-y-3 md:hidden">
-                  {user.orders.map((order) => (
+                  {ordersWithSupportId.map((order) => (
                     <div
                       key={order.id}
                       className="border border-white/10 bg-white/[0.02] px-4 py-4"
@@ -458,6 +507,23 @@ export default async function AccountPage() {
                         <OrderStatusBadge status={order.status} />
                       </div>
                       <OrderStatusTrack status={order.status} />
+                      <div className="mt-3 border border-[#FFD700]/20 bg-black/25 px-3 py-3">
+                        <p className="text-[10px] tracking-wider text-[#FFD700]/70 uppercase">
+                          Support ID — give this to Discord staff
+                        </p>
+                        <div className="mt-1">
+                          <CopySupportId
+                            value={
+                              order.receiptNumber ||
+                              buildReceiptNumber(order.id, order.createdAt)
+                            }
+                          />
+                        </div>
+                        <p className="mt-2 text-[11px] leading-relaxed text-white/40">
+                          Paste in your ticket so admins can look up this purchase
+                          with /order.
+                        </p>
+                      </div>
                       <p className="mt-3 font-mono text-xs text-white/55">
                         {order.mlbbUserId} ({order.mlbbZoneId})
                       </p>
@@ -490,10 +556,16 @@ export default async function AccountPage() {
                   ))}
                 </div>
                 <div className="mt-4 hidden overflow-x-auto border border-white/10 md:block">
-                  <table className="w-full min-w-[860px] text-left text-sm">
+                  <table className="w-full min-w-[960px] text-left text-sm">
                     <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase tracking-wider text-white/40">
                       <tr>
                         <th className="px-4 py-3 font-medium">Date</th>
+                        <th className="px-4 py-3 font-medium">
+                          Support ID
+                          <span className="mt-0.5 block font-normal normal-case tracking-normal text-white/30">
+                            For Discord /order
+                          </span>
+                        </th>
                         <th className="px-4 py-3 font-medium">Product</th>
                         <th className="px-4 py-3 font-medium">Player</th>
                         <th className="px-4 py-3 font-medium">Amount</th>
@@ -504,13 +576,21 @@ export default async function AccountPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {user.orders.map((order) => (
+                      {ordersWithSupportId.map((order) => (
                         <tr
                           key={order.id}
                           className="border-b border-white/5 text-white/75"
                         >
                           <td className="px-4 py-3 whitespace-nowrap">
                             {order.createdAt.toLocaleString("en-GB")}
+                          </td>
+                          <td className="px-4 py-3">
+                            <CopySupportId
+                              value={
+                                order.receiptNumber ||
+                                buildReceiptNumber(order.id, order.createdAt)
+                              }
+                            />
                           </td>
                           <td className="px-4 py-3">{order.productLabel}</td>
                           <td className="px-4 py-3 font-mono text-xs">

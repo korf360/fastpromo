@@ -33,11 +33,11 @@ export async function registerSlashCommands(clientId, token) {
       .setDescription("View FastPromo diamond pricing tiers"),
     new SlashCommandBuilder()
       .setName("order")
-      .setDescription("Check real-time status of a FastPromo order")
+      .setDescription("Look up a FastPromo order by support ID or Stripe session")
       .addStringOption((o) =>
         o
           .setName("transaction_id")
-          .setDescription("Stripe checkout session ID (cs_...)")
+          .setDescription("Support ID (FP-YYYY-XXXXXXXX) or Stripe cs_...")
           .setRequired(true)
       ),
     new SlashCommandBuilder()
@@ -185,11 +185,13 @@ async function cmdPrices(interaction, siteUrl) {
  */
 async function cmdOrder(interaction, siteUrl) {
   const transactionId = interaction.options.getString("transaction_id", true).trim();
+  const isReceipt = /^FP-\d{4}-[A-Z0-9]{8}$/i.test(transactionId);
+  const isStripe = /^cs_[a-zA-Z0-9_]+$/.test(transactionId);
 
-  if (!/^cs_[a-zA-Z0-9_]+$/.test(transactionId)) {
+  if (!isReceipt && !isStripe) {
     await interaction.reply({
       content:
-        "Invalid transaction ID. Use a Stripe Checkout Session ID starting with `cs_`.",
+        "Invalid reference. Ask the user for their **Support ID** from Account → Purchase activity (looks like `FP-2026-ABCD1234`), or a Stripe session ID starting with `cs_`.",
       ephemeral: true,
     });
     return;
@@ -216,32 +218,73 @@ async function cmdOrder(interaction, siteUrl) {
 
   const status = String(data.status || "Unknown");
   const color =
-    status === "Completed"
+    status === "Completed" || status === "Paid"
       ? 0x22c55e
       : status === "Failed"
         ? 0xef4444
         : 0xf59e0b;
 
+  const fields = [
+    {
+      name: "Support ID",
+      value: data.receiptNumber
+        ? `\`${data.receiptNumber}\``
+        : isReceipt
+          ? `\`${transactionId.toUpperCase()}\``
+          : "—",
+      inline: true,
+    },
+    {
+      name: "Status",
+      value: data.dbStatus
+        ? `**${status}** (\`${data.dbStatus}\`)`
+        : `**${status}**`,
+      inline: true,
+    },
+    {
+      name: "Product",
+      value: data.productLabel || data.productId || "—",
+      inline: true,
+    },
+    {
+      name: "Player",
+      value:
+        data.userId && data.zoneId
+          ? `\`${data.userId}\` (Zone \`${data.zoneId}\`)`
+          : "—",
+      inline: true,
+    },
+    {
+      name: "Amount",
+      value: data.amountFormatted || "—",
+      inline: true,
+    },
+  ];
+
+  if (data.customerEmail) {
+    fields.push({
+      name: "Account email",
+      value: `\`${data.customerEmail}\``,
+      inline: true,
+    });
+  }
+
+  if (data.sessionId) {
+    fields.push({
+      name: "Stripe session",
+      value: `\`${data.sessionId}\``,
+      inline: false,
+    });
+  }
+
   const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(`Order · ${status}`)
-    .addFields(
-      { name: "Transaction", value: `\`${transactionId}\``, inline: false },
-      {
-        name: "Product",
-        value: data.productLabel || data.productId || "—",
-        inline: true,
-      },
-      {
-        name: "Player",
-        value:
-          data.userId && data.zoneId
-            ? `\`${data.userId}\` (Zone \`${data.zoneId}\`)`
-            : "—",
-        inline: true,
-      }
+    .setDescription(
+      "Share this embed with the ticket. User support IDs live under Account → Purchase activity."
     )
-    .setTimestamp();
+    .addFields(fields)
+    .setTimestamp(data.createdAt ? new Date(data.createdAt) : undefined);
 
   await interaction.editReply({ embeds: [embed] });
 }

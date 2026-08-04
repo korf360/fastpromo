@@ -43,6 +43,8 @@ export async function GET(request: Request) {
         o.promoCodeSnapshot ?? "",
         o.status,
         o.stripeSessionId,
+        o.receiptNumber ?? "",
+        o.id,
       ]
         .join(" ")
         .toLowerCase();
@@ -54,6 +56,7 @@ export async function GET(request: Request) {
     ok: true,
     orders: filtered.map((o) => ({
       id: o.id,
+      receiptNumber: o.receiptNumber,
       createdAt: o.createdAt.toISOString(),
       status: o.status,
       productLabel: o.productLabel,
