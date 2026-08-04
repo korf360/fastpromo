@@ -285,7 +285,8 @@ export function TopUpFlow() {
               2
             </span>
             <h2 className="text-lg font-semibold tracking-wide text-white sm:text-xl">
-              Promo Code
+              Promo Code{" "}
+              <span className="font-normal text-white/40">(optional)</span>
             </h2>
           </div>
 

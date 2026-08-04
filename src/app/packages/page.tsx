@@ -19,11 +19,7 @@ export default function PackagesPage() {
       <ScrollEffects />
       <Header />
       <main className="relative flex-1">
-        <section className="relative overflow-hidden border-b border-white/5 px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-14 lg:pt-20">
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,215,0,0.08),transparent_55%)]"
-            aria-hidden="true"
-          />
+        <section className="relative border-b border-white/5 px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-14 lg:pt-20">
           <div data-reveal className="reveal relative mx-auto max-w-6xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFD700]">
               Top-Up
