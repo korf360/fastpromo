@@ -10,7 +10,9 @@ export default function PrivacyPage() {
       </p>
       <h2>1. Data we process</h2>
       <ul>
-        <li>MLBB User ID and Zone ID (to deliver your order)</li>
+        <li>Account email, display name, and authentication credentials (hashed) or Google account link</li>
+        <li>In-game User ID and Zone ID (to deliver your order)</li>
+        <li>Order history and cashback ledger entries</li>
         <li>Payment metadata via Stripe (we do not store full card numbers)</li>
         <li>Technical logs required for security and fraud prevention</li>
         <li>Optional analytics cookies if you consent</li>

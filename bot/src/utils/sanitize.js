@@ -1,4 +1,4 @@
-/** Digits-only MLBB identifiers */
+/** Digits-only in-game User ID / Zone ID identifiers */
 const ID_PATTERN = /^[0-9]{1,20}$/;
 
 /**

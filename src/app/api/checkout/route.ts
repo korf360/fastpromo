@@ -1,11 +1,12 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { calculateMaxCashbackRedeem } from "@/lib/cashback-config";
 import { isProductId, PRODUCT_CATALOG, type ProductId } from "@/lib/products";
+import { validatePromoForCheckout } from "@/lib/promo";
 
-/** Digits-only MLBB identifiers (injection-safe). */
 const ID_PATTERN = /^[0-9]{1,20}$/;
-
-/** Strict productId allowlist pattern. */
 const PRODUCT_ID_PATTERN = /^[a-z0-9_]{1,64}$/;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -58,6 +59,14 @@ function resolveOrigin(request: Request): string {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { ok: false, error: "Sign in required to checkout.", code: "AUTH_REQUIRED" },
+        { status: 401 }
+      );
+    }
+
     let raw: unknown;
     try {
       raw = await request.json();
@@ -75,11 +84,32 @@ export async function POST(request: Request) {
       );
     }
 
-    const userId = sanitizePlayerId(raw.userId);
+    const mlbbUserId = sanitizePlayerId(raw.userId);
     const zoneId = sanitizePlayerId(raw.zoneId);
     const productId = sanitizeProductId(raw.productId);
+    const useCashback = raw.useCashback === true;
+    const promoRaw =
+      typeof raw.promoCode === "string" && raw.promoCode.trim().length > 0
+        ? raw.promoCode
+        : null;
 
-    if (!userId || !zoneId || !productId) {
+    if (
+      raw.consentAge !== true ||
+      raw.consentDigitalDelivery !== true ||
+      raw.consentIdsAccurate !== true
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Required consents missing: age, immediate digital delivery / withdrawal waiver, and ID accuracy.",
+          code: "CONSENTS_REQUIRED",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!mlbbUserId || !zoneId || !productId) {
       return NextResponse.json(
         {
           ok: false,
@@ -94,76 +124,141 @@ export async function POST(request: Request) {
     const stripe = getStripe();
 
     if (!stripe) {
-      console.error(
-        "[checkout] STRIPE_SECRET_KEY is missing or empty. Cannot create session."
-      );
+      console.error("[checkout] STRIPE_SECRET_KEY is missing or empty.");
       return NextResponse.json(
         { ok: false, error: "Payment service is temporarily unavailable." },
         { status: 500 }
       );
     }
 
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { cashbackCents: true, email: true },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { ok: false, error: "Account not found. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    let promoCodeId: string | null = null;
+    let promoCodeSnapshot: string | null = null;
+    let promoDiscountCents = 0;
+
+    if (promoRaw) {
+      const promo = await validatePromoForCheckout(
+        promoRaw,
+        session.user.id,
+        product.priceInCents,
+        productId
+      );
+      if (!promo.ok) {
+        return NextResponse.json(
+          { ok: false, error: promo.error, code: promo.code ?? "PROMO_INVALID" },
+          { status: 400 }
+        );
+      }
+      promoCodeId = promo.promoCodeId;
+      promoCodeSnapshot = promo.code;
+      promoDiscountCents = promo.discountCents;
+    }
+
+    const priceAfterPromo = product.priceInCents - promoDiscountCents;
+    const cashbackAppliedCents = useCashback
+      ? calculateMaxCashbackRedeem(priceAfterPromo, dbUser.cashbackCents)
+      : 0;
+    const chargeCents = priceAfterPromo - cashbackAppliedCents;
+
     const origin = resolveOrigin(request);
 
-    /**
-     * `card` enables cards + Apple Pay / Google Pay (wallets) when configured
-     * in the Stripe Dashboard. EU locals: iDEAL, Bancontact. Klarna covers the
-     * Sofort migration path. Bizum requires an ES-capable Stripe account —
-     * enable it in the Dashboard (or via automatic_payment_methods) if eligible.
-     */
-    const session = await stripe.checkout.sessions.create({
+    const discountBits: string[] = [];
+    if (promoDiscountCents > 0 && promoCodeSnapshot) {
+      discountBits.push(`promo ${promoCodeSnapshot}`);
+    }
+    if (cashbackAppliedCents > 0) {
+      discountBits.push("cashback applied");
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
+      customer_email: dbUser.email,
+      // PayPal: enable in Stripe Dashboard first, then add "paypal" here.
       payment_method_types: ["card", "ideal", "bancontact", "klarna"],
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: "eur",
-            unit_amount: product.priceInCents,
+            unit_amount: chargeCents,
             product_data: {
               name: product.name,
-              description: `FastPromo MLBB top-up — ${product.name}`,
-              metadata: {
-                productId,
-              },
+              description:
+                discountBits.length > 0
+                  ? `FastPromo diamond top-up — ${product.name} (${discountBits.join(", ")})`
+                  : `FastPromo diamond top-up — ${product.name}`,
+              metadata: { productId },
             },
           },
         },
       ],
       metadata: {
-        userId,
+        userId: mlbbUserId,
         zoneId,
         productId,
+        authUserId: session.user.id,
+        cashbackAppliedCents: String(cashbackAppliedCents),
+        catalogPriceCents: String(product.priceInCents),
+        promoCodeId: promoCodeId ?? "",
+        promoCode: promoCodeSnapshot ?? "",
+        promoDiscountCents: String(promoDiscountCents),
       },
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/`,
+      cancel_url: `${origin}/#top-up`,
     });
 
-    if (!session.url) {
-      console.error("[checkout] Stripe session created without a URL", {
-        sessionId: session.id,
-      });
+    if (!checkoutSession.url) {
       return NextResponse.json(
         { ok: false, error: "Unable to start checkout. Please try again." },
         { status: 500 }
       );
     }
 
-    // Fire-and-forget bot logger (does not block checkout)
+    await prisma.order.create({
+      data: {
+        userId: session.user.id,
+        stripeSessionId: checkoutSession.id,
+        productId,
+        productLabel: product.name,
+        mlbbUserId,
+        mlbbZoneId: zoneId,
+        amountCents: chargeCents,
+        cashbackAppliedCents,
+        promoCodeId,
+        promoCodeSnapshot,
+        promoDiscountCents,
+        status: "pending",
+      },
+    });
+
     void import("@/lib/notifyBot").then(({ notifyBotLogger }) =>
       notifyBotLogger({
         event: "payment.initiated",
-        userId,
+        userId: mlbbUserId,
         zoneId,
         productId,
-        sessionId: session.id,
+        sessionId: checkoutSession.id,
       })
     );
 
     return NextResponse.json({
       ok: true,
-      sessionId: session.id,
-      redirectUrl: session.url,
+      sessionId: checkoutSession.id,
+      redirectUrl: checkoutSession.url,
+      cashbackAppliedCents,
+      promoDiscountCents,
+      chargeCents,
     });
   } catch (err) {
     console.error("[checkout] Stripe session creation failed:", err);

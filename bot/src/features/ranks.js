@@ -20,16 +20,9 @@ export async function deployRankPanel(guild) {
     throw new Error(`Channel ${CHANNEL_NAMES.gameRanges} not found.`);
   }
 
-  const messages = await channel.messages.fetch({ limit: 20 });
-  const existing = messages.find((m) => messageHasCustomId(m, IDS.rankSelect));
-  if (existing) {
-    console.log(`  ↪ rank panel exists in ${channel.name}`);
-    return existing;
-  }
-
   const embed = new EmbedBuilder()
     .setColor(0xffd700)
-    .setTitle("MLBB Rank Ranges · FastPromo")
+    .setTitle("Rank Ranges · FastPromo")
     .setDescription(
       [
         "Select your **current ranked tier** so the community and staff can match you faster.",
@@ -52,7 +45,7 @@ export async function deployRankPanel(guild) {
 
   const menu = new StringSelectMenuBuilder()
     .setCustomId(IDS.rankSelect)
-    .setPlaceholder("Select your MLBB rank tier")
+    .setPlaceholder("Select your rank tier")
     .addOptions(
       RANK_TIERS.map((tier) => ({
         label: tier.label,
@@ -62,7 +55,17 @@ export async function deployRankPanel(guild) {
     );
 
   const row = new ActionRowBuilder().addComponents(menu);
-  const sent = await channel.send({ embeds: [embed], components: [row] });
+  const payload = { embeds: [embed], components: [row] };
+
+  const messages = await channel.messages.fetch({ limit: 20 });
+  const existing = messages.find((m) => messageHasCustomId(m, IDS.rankSelect));
+  if (existing) {
+    await existing.edit(payload);
+    console.log(`  ↪ rank panel updated in ${channel.name}`);
+    return existing;
+  }
+
+  const sent = await channel.send(payload);
   console.log(`  + rank panel deployed in ${channel.name}`);
   return sent;
 }

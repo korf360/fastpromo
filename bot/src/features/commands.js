@@ -30,7 +30,7 @@ export async function registerSlashCommands(clientId, token) {
   const commands = [
     new SlashCommandBuilder()
       .setName("prices")
-      .setDescription("View FastPromo MLBB diamond pricing tiers"),
+      .setDescription("View FastPromo diamond pricing tiers"),
     new SlashCommandBuilder()
       .setName("order")
       .setDescription("Check real-time status of a FastPromo order")
@@ -42,7 +42,7 @@ export async function registerSlashCommands(clientId, token) {
       ),
     new SlashCommandBuilder()
       .setName("topup")
-      .setDescription("Start a secure MLBB diamond top-up checkout"),
+      .setDescription("Start a secure diamond top-up checkout"),
     new SlashCommandBuilder()
       .setName("status")
       .setDescription("Update the public server status board (Admin)")
@@ -159,7 +159,7 @@ async function cmdPrices(interaction, siteUrl) {
 
   const embed = new EmbedBuilder()
     .setColor(0xffd700)
-    .setTitle("FastPromo · MLBB Prices")
+    .setTitle("FastPromo · Prices")
     .setDescription(
       `${lines.join("\n")}\n\nInstant delivery via official API gateways.`
     )
@@ -252,7 +252,7 @@ async function cmdOrder(interaction, siteUrl) {
 async function cmdTopupModal(interaction) {
   const modal = new ModalBuilder()
     .setCustomId(IDS.topupModal)
-    .setTitle("MLBB Top-Up");
+    .setTitle("Diamond Top-Up");
 
   const userIdInput = new TextInputBuilder()
     .setCustomId(IDS.topupUserId)

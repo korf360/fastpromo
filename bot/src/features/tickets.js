@@ -195,7 +195,7 @@ async function handleOpenTicket(interaction, adminRoleId) {
     .setDescription(
       `Welcome <@${user.id}>.\n\n` +
         "Please describe your issue and include:\n" +
-        "• MLBB **User ID** & **Zone ID**\n" +
+        "• In-game **User ID** & **Zone ID**\n" +
         "• Stripe / order reference (if any)\n" +
         "• Screenshots of the problem\n\n" +
         "Staff will assist you here shortly."

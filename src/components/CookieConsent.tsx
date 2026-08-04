@@ -87,7 +87,7 @@ export function CookieConsent() {
 
   return (
     <div
-      className="cookie-banner fixed inset-x-0 bottom-0 z-[60] p-4 sm:p-6"
+      className="cookie-banner fixed inset-x-0 bottom-0 z-[60] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6"
       role="dialog"
       aria-labelledby="cookie-title"
       aria-describedby="cookie-desc"
@@ -145,21 +145,21 @@ export function CookieConsent() {
               <button
                 type="button"
                 onClick={() => setPrefsOpen(true)}
-                className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition-all duration-300 hover:border-white/30"
+                className="min-h-11 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition-all duration-300 hover:border-white/30"
               >
                 Customize
               </button>
               <button
                 type="button"
                 onClick={essentialOnly}
-                className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:border-[#FFD700]/40"
+                className="min-h-11 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:border-[#FFD700]/40"
               >
                 Essential only
               </button>
               <button
                 type="button"
                 onClick={acceptAll}
-                className="rounded-lg bg-[#FFD700] px-4 py-2.5 text-sm font-bold text-[#0d0f12] transition-all duration-300 hover:brightness-110"
+                className="min-h-11 rounded-lg bg-[#FFD700] px-4 py-2.5 text-sm font-bold text-[#0d0f12] transition-all duration-300 hover:brightness-110"
               >
                 Accept all
               </button>
@@ -169,14 +169,14 @@ export function CookieConsent() {
               <button
                 type="button"
                 onClick={essentialOnly}
-                className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-all duration-300"
+                className="min-h-11 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white transition-all duration-300"
               >
                 Reject optional
               </button>
               <button
                 type="button"
                 onClick={savePrefs}
-                className="rounded-lg bg-[#FFD700] px-4 py-2.5 text-sm font-bold text-[#0d0f12] transition-all duration-300 hover:brightness-110"
+                className="min-h-11 rounded-lg bg-[#FFD700] px-4 py-2.5 text-sm font-bold text-[#0d0f12] transition-all duration-300 hover:brightness-110"
               >
                 Save preferences
               </button>

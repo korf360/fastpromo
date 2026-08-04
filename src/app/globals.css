@@ -23,12 +23,21 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(5.5rem + env(safe-area-inset-top, 0px));
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-outfit), system-ui, sans-serif;
+  overflow-x: clip;
 }
 
 /* Atmospheric gaming backdrop */
@@ -57,13 +66,12 @@ body {
     0 0 20px rgba(255, 215, 0, 0.25);
 }
 
-/* Package selected state */
+/* Package selected state — no scale (avoids mobile overflow) */
 .package-selected {
   border-color: #ffd700;
   box-shadow:
     0 0 0 1px #ffd700,
     0 0 24px rgba(255, 215, 0, 0.2);
-  transform: scale(1.03);
 }
 
 /* Modal overlay */
@@ -115,18 +123,31 @@ body {
 }
 
 .reveal {
-  animation: revealUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 
-@keyframes revealUp {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.package-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.35) transparent;
+}
+
+.package-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.package-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.35);
 }
 
 .footer-link {
@@ -168,6 +189,19 @@ body {
   font-weight: 600;
 }
 
+/* Print-friendly receipts */
+@media print {
+  header,
+  footer,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -175,5 +209,10 @@ body {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 }

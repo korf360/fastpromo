@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 type FeatureSplitProps = {
   id?: string;
@@ -9,6 +10,10 @@ type FeatureSplitProps = {
   imageSrc: string;
   imageAlt: string;
   reverse?: boolean;
+  /** Opaque band so neighboring gold washes do not bleed through. */
+  tone?: "base" | "deep";
+  ctaHref?: string;
+  ctaLabel?: string;
 };
 
 export function FeatureSplit({
@@ -20,19 +25,23 @@ export function FeatureSplit({
   imageSrc,
   imageAlt,
   reverse = false,
+  tone = "base",
+  ctaHref,
+  ctaLabel,
 }: FeatureSplitProps) {
+  const band = tone === "deep" ? "bg-[#0a0c0f]" : "bg-[#0d0f12]";
+
   return (
     <section
       id={id}
-      className="relative scroll-mt-24 px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+      className={`relative isolate scroll-mt-24 ${band} px-4 py-20 sm:px-6 lg:px-8 lg:py-28`}
       aria-labelledby={id ? `${id}-heading` : undefined}
     >
       <div
-        className={`mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16 ${
-          reverse ? "" : ""
-        }`}
+        className={`mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16`}
       >
         <div
+          data-reveal
           className={`reveal relative aspect-[4/3] overflow-hidden ${
             reverse ? "lg:order-2" : ""
           }`}
@@ -50,7 +59,7 @@ export function FeatureSplit({
           />
         </div>
 
-        <div className={`reveal ${reverse ? "lg:order-1" : ""}`}>
+        <div data-reveal className={`reveal ${reverse ? "lg:order-1" : ""}`}>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFD700]">
             {eyebrow}
           </p>
@@ -77,6 +86,14 @@ export function FeatureSplit({
               </li>
             ))}
           </ul>
+          {ctaHref && ctaLabel ? (
+            <Link
+              href={ctaHref}
+              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl border border-[#FFD700]/45 bg-transparent px-5 py-2.5 text-sm font-semibold text-[#FFD700] transition-colors duration-300 hover:border-[#FFD700] hover:bg-[#FFD700]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              {ctaLabel}
+            </Link>
+          ) : null}
         </div>
       </div>
     </section>

@@ -1,5 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   ActionRowBuilder,
+  AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
@@ -18,6 +21,13 @@ import {
 import { deployTicketPanel } from "./features/tickets.js";
 import { deployRankPanel } from "./features/ranks.js";
 import { upsertStatusEmbed } from "./features/status.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const BROADCAST_BANNER_PATH = path.resolve(
+  __dirname,
+  "../assets/banner.png"
+);
+const BROADCAST_BANNER_NAME = "banner.png";
 
 /**
  * Idempotent guild bootstrap: categories, channels, permissions, embed panel.
@@ -355,14 +365,19 @@ async function handleBroadcastModal(interaction) {
     return;
   }
 
+  const banner = new AttachmentBuilder(BROADCAST_BANNER_PATH, {
+    name: BROADCAST_BANNER_NAME,
+  });
+
   const embed = new EmbedBuilder()
     .setColor(color)
     .setTitle(title)
     .setDescription(description)
+    .setImage(`attachment://${BROADCAST_BANNER_NAME}`)
     .setFooter({ text: "FastPromo" })
     .setTimestamp();
 
-  await channel.send({ embeds: [embed] });
+  await channel.send({ embeds: [embed], files: [banner] });
 
   await interaction.reply({
     content: `Broadcast sent to <#${channel.id}>.`,

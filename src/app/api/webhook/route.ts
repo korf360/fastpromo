@@ -9,6 +9,7 @@ import {
 } from "@/lib/discord";
 import { createMoogoldOrder } from "@/lib/moogold";
 import { notifyBotLogger } from "@/lib/notifyBot";
+import { markOrderStatus, recordOrderAndCashback } from "@/lib/orders";
 import {
   isProductId,
   PRODUCT_CATALOG,
@@ -26,10 +27,6 @@ function getStripe(): Stripe | null {
   });
 }
 
-/**
- * Stripe → FastPromo webhook.
- * Verifies signature, acknowledges 200 immediately, fulfills via MooGold in `after()`.
- */
 export async function POST(request: Request) {
   const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
@@ -52,7 +49,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Raw body buffer is required for constructEvent integrity checks.
   const rawBody = Buffer.from(await request.arrayBuffer());
 
   let event: Stripe.Event;
@@ -66,7 +62,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Accept processing responsibility immediately so Stripe does not retry.
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     after(() => {
@@ -84,6 +79,15 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   const userId = metadata.userId?.trim();
   const zoneId = metadata.zoneId?.trim();
   const productIdRaw = metadata.productId?.trim();
+  const authUserId = metadata.authUserId?.trim();
+  const cashbackAppliedCents = Number(metadata.cashbackAppliedCents || "0") || 0;
+  const promoCodeId = metadata.promoCodeId?.trim() || null;
+  const promoCodeSnapshot = metadata.promoCode?.trim() || null;
+  const promoDiscountCents = Number(metadata.promoDiscountCents || "0") || 0;
+  const amountPaidCents =
+    typeof session.amount_total === "number"
+      ? session.amount_total
+      : Number(metadata.catalogPriceCents || "0") || 0;
 
   if (!userId || !zoneId || !productIdRaw || !isProductId(productIdRaw)) {
     const error =
@@ -107,11 +111,40 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
 
   const productId = productIdRaw as ProductId;
   const product = PRODUCT_CATALOG[productId];
+
+  if (authUserId) {
+    try {
+      const orderRow = await recordOrderAndCashback({
+        authUserId,
+        stripeSessionId: session.id,
+        productId,
+        productLabel: product.name,
+        mlbbUserId: userId,
+        mlbbZoneId: zoneId,
+        amountPaidCents,
+        cashbackAppliedCents,
+        promoCodeId,
+        promoCodeSnapshot,
+        promoDiscountCents,
+        status: "paid",
+      });
+
+      void import("@/lib/email").then(({ sendOrderReceiptEmail }) =>
+        sendOrderReceiptEmail(orderRow.id).catch((err) => {
+          console.error("[webhook] receipt email failed:", err);
+        })
+      );
+    } catch (err) {
+      console.error("[webhook] order/cashback record failed:", err);
+    }
+  }
+
   const moogoldProductId = resolveMoogoldProductId(productId);
 
   if (!moogoldProductId) {
     const error = `MooGold SKU env not set for ${product.moogoldEnvKey}.`;
     console.error("[webhook]", error);
+    if (authUserId) await markOrderStatus(session.id, "failed");
     await sendDiscordAudit({
       content: buildAdminPing(),
       embeds: [
@@ -137,7 +170,12 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
     });
 
     if (!result.ok) {
-      console.error("[webhook] MooGold fulfillment failed:", result.error, result.raw);
+      console.error(
+        "[webhook] MooGold fulfillment failed:",
+        result.error,
+        result.raw
+      );
+      if (authUserId) await markOrderStatus(session.id, "failed");
       await Promise.all([
         sendDiscordAudit({
           content: buildAdminPing(),
@@ -164,6 +202,8 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       ]);
       return;
     }
+
+    if (authUserId) await markOrderStatus(session.id, "fulfilled");
 
     const moogoldOrderRef = extractOrderRef(result.body);
 
@@ -193,8 +233,8 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
     ]);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack : undefined;
-    console.error("[webhook] MooGold exception:", message, stack);
+    console.error("[webhook] MooGold exception:", message);
+    if (authUserId) await markOrderStatus(session.id, "failed");
 
     await Promise.all([
       sendDiscordAudit({

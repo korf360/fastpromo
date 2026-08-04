@@ -67,7 +67,7 @@ export function IdGuideModal({ open, onClose }: IdGuideModalProps) {
         <div className="space-y-4 p-5">
           <MlbbProfileGuide />
           <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-white/70">
-            <li>Open Mobile Legends and tap your avatar.</li>
+            <li>Open the game and tap your avatar.</li>
             <li>
               Under your nickname, find{" "}
               <span className="text-[#FFD700]">User ID</span> (long number) and{" "}
@@ -82,7 +82,7 @@ export function IdGuideModal({ open, onClose }: IdGuideModalProps) {
   );
 }
 
-/** Stylized MLBB profile mock — shows where User ID / Zone ID appear */
+/** Stylized in-game profile mock — shows where User ID / Zone ID appear */
 function MlbbProfileGuide() {
   return (
     <div

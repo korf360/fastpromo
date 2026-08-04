@@ -1,78 +1,148 @@
-const DISCORD_URL = "https://discord.gg/fastpromo";
+"use client";
+
+import { useEffect, useId, useState } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { BrandMark } from "./BrandMark";
+import { HeaderAuth } from "./HeaderAuth";
 
 const NAV = [
-  { href: "#why", label: "Why FastPromo" },
-  { href: "#how", label: "How it works" },
-  { href: "#top-up", label: "Top-Up" },
-  { href: "#support", label: "Support" },
+  { href: "/packages", label: "Top-Up" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/#support", label: "Support" },
 ];
 
 export function Header() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0d0f12]/80 backdrop-blur-xl transition-all duration-300">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
-        <a
-          href="/"
-          className="font-[family-name:var(--font-cinzel)] text-xl font-semibold tracking-wide text-[#FFD700] transition-all duration-300 hover:brightness-110 sm:text-2xl"
-          aria-label="FastPromo home"
-        >
-          FastPromo
-        </a>
+  const [open, setOpen] = useState(false);
+  const menuId = useId();
+  const { data: session, status } = useSession();
 
-        <nav
-          className="hidden items-center gap-6 lg:flex"
-          aria-label="Primary"
-        >
-          {NAV.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="text-sm text-white/55 transition-all duration-300 hover:text-[#FFD700] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700]"
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  function close() {
+    setOpen(false);
+  }
+
+  const authHref = session?.user ? "/account" : "/login";
+  const authLabel = session?.user ? "Account" : "Sign in";
+
+  return (
+    <>
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0d0f12]/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl transition-all duration-300">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
+          <BrandMark />
+
+          <nav
+            className="hidden items-center gap-6 lg:flex"
+            aria-label="Primary"
+          >
+            {NAV.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-sm text-white/55 transition-all duration-300 hover:text-[#FFD700] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700]"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex items-center justify-end gap-2">
+            <div className="hidden sm:block">
+              <HeaderAuth />
+            </div>
+            <button
+              type="button"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 text-white/80 transition-colors hover:border-[#FFD700]/40 hover:text-[#FFD700] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700] lg:hidden"
+              aria-expanded={open}
+              aria-controls={menuId}
+              aria-label={open ? "Close menu" : "Open menu"}
+              onClick={() => setOpen((v) => !v)}
             >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span
-            className="hidden items-center gap-1.5 rounded-md border border-[#FFD700]/25 bg-[#FFD700]/10 px-2.5 py-1 text-xs font-medium text-[#FFD700] md:inline-flex"
-            role="status"
-          >
-            5-Sec Delivery
-          </span>
-
-          <a
-            href="#top-up"
-            className="hidden rounded-lg bg-[#FFD700] px-3.5 py-2 text-sm font-bold text-[#0d0f12] transition-all duration-300 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex"
-          >
-            Buy Diamonds
-          </a>
-
-          <a
-            href={DISCORD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white transition-all duration-300 hover:border-[#5865F2]/50 hover:bg-[#5865F2]/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700]"
-          >
-            <DiscordIcon className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">Discord</span>
-          </a>
+              <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+              <span aria-hidden="true" className="relative block h-3.5 w-4">
+                <span
+                  className={`absolute left-0 top-0 block h-0.5 w-4 bg-current transition-transform duration-200 ${
+                    open ? "translate-y-[6px] rotate-45" : ""
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[6px] block h-0.5 w-4 bg-current transition-opacity duration-200 ${
+                    open ? "opacity-0" : ""
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[12px] block h-0.5 w-4 bg-current transition-transform duration-200 ${
+                    open ? "-translate-y-[6px] -rotate-45" : ""
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
-  );
-}
 
-function DiscordIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.548-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-    </svg>
+        <div
+          id={menuId}
+          className={`border-t border-white/5 bg-[#0d0f12] lg:hidden ${
+            open ? "block" : "hidden"
+          }`}
+        >
+          <nav
+            className="mx-auto flex max-h-[min(70dvh,28rem)] max-w-6xl flex-col gap-1 overflow-y-auto px-4 py-4 sm:px-6"
+            aria-label="Mobile"
+          >
+            {NAV.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={close}
+                className="rounded-lg px-3 py-3.5 text-base text-white/75 transition-colors hover:bg-white/5 hover:text-[#FFD700]"
+              >
+                {item.label}
+              </a>
+            ))}
+            {status !== "loading" && (
+              <Link
+                href={authHref}
+                onClick={close}
+                className="mt-1 min-h-11 rounded-lg border border-[#FFD700]/35 bg-[#FFD700]/10 px-3 py-3.5 text-base font-semibold text-[#FFD700] transition-colors hover:bg-[#FFD700]/20"
+              >
+                {authLabel}
+              </Link>
+            )}
+            {session?.user?.isAdmin && (
+              <Link
+                href="/admin"
+                onClick={close}
+                className="rounded-lg px-3 py-3.5 text-base text-white/75 transition-colors hover:bg-white/5 hover:text-[#FFD700]"
+              >
+                Admin
+              </Link>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      {open && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-black/55 lg:hidden"
+          aria-label="Close menu overlay"
+          onClick={close}
+        />
+      )}
+    </>
   );
 }

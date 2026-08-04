@@ -11,6 +11,9 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const STATE_PATH = path.resolve(__dirname, "../../data/status-message.json");
 
+/** Temporarily off (MooGold creds not set). Flip to true when user asks to restore alerts. */
+const ALERT_SUPPLIER_HEALTH_FAILURES = false;
+
 /**
  * @typedef {{ guildId: string, channelId: string, messageId: string, apiStatus?: string, gameStatus?: string }} StatusState
  */
@@ -132,7 +135,7 @@ export function startStatusMonitor(client, guildId, adminRoleId) {
 
       await upsertStatusEmbed(guild, apiStatus, gameStatus);
 
-      if (!health.ok) {
+      if (!health.ok && ALERT_SUPPLIER_HEALTH_FAILURES) {
         const logs = findChannelByName(guild, CHANNEL_NAMES.logs);
         if (logs?.isTextBased()) {
           const alert = new EmbedBuilder()
