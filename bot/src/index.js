@@ -45,38 +45,42 @@ async function main() {
   client.once("ready", async () => {
     console.log(`🤖 FastPromo bot online as ${client.user?.tag}`);
     console.log(`📍 Target guild: ${env.guildId}`);
+    console.log(`🌐 Shop URL: ${env.siteUrl}`);
 
-    try {
-      await registerSlashCommands(env.clientId, env.token);
-    } catch (err) {
-      console.error("❌ Slash command registration failed:", err);
-    }
-
-    // Refresh support ticket panel copy (Support ID instructions) without full setup.
-    try {
-      const guild = await client.guilds.fetch(env.guildId);
-      await guild.channels.fetch();
-      await deployTicketPanel(guild);
-    } catch (err) {
-      console.warn("⚠ Could not refresh ticket panel:", err);
-    }
-
-    const shouldBootstrap = process.env.DISCORD_AUTO_SETUP === "true";
-    if (shouldBootstrap) {
-      try {
-        await setupGuild(client, env.guildId);
-      } catch (err) {
-        console.error("❌ Auto-setup failed:", err);
-      }
-    }
-
-    startStatusMonitor(client, env.guildId, env.adminRoleId);
+    // Start HTTP ASAP so Railway health checks pass even if Discord setup is slow.
     startExpressServer(client, {
       guildId: env.guildId,
       adminRoleId: env.adminRoleId,
       port: env.port,
       internalWebhookSecret: env.internalWebhookSecret,
     });
+
+    try {
+      await registerSlashCommands(env.clientId, env.token, env.guildId);
+    } catch (err) {
+      console.error("❌ Slash command registration failed:", err);
+    }
+
+    startStatusMonitor(client, env.guildId, env.adminRoleId);
+
+    // Non-blocking guild panel refresh
+    void (async () => {
+      try {
+        const guild = await client.guilds.fetch(env.guildId);
+        await guild.channels.fetch();
+        await deployTicketPanel(guild);
+      } catch (err) {
+        console.warn("⚠ Could not refresh ticket panel:", err);
+      }
+
+      if (process.env.DISCORD_AUTO_SETUP === "true") {
+        try {
+          await setupGuild(client, env.guildId);
+        } catch (err) {
+          console.error("❌ Auto-setup failed:", err);
+        }
+      }
+    })();
   });
 
   client.on("error", (err) => {

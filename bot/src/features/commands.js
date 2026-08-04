@@ -27,8 +27,9 @@ import { resolvePublicShopUrl } from "../utils/shopUrl.js";
 /**
  * @param {string} clientId
  * @param {string} token
+ * @param {string} [guildId] When set, also registers guild commands (instant update).
  */
-export async function registerSlashCommands(clientId, token) {
+export async function registerSlashCommands(clientId, token, guildId) {
   const commands = [
     new SlashCommandBuilder()
       .setName("prices")
@@ -87,6 +88,15 @@ export async function registerSlashCommands(clientId, token) {
   const rest = new REST({ version: "10" }).setToken(token);
   await rest.put(Routes.applicationCommands(clientId), { body: commands });
   console.log(`✅ Registered ${commands.length} global slash commands.`);
+
+  if (guildId) {
+    await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      body: commands,
+    });
+    console.log(
+      `✅ Registered ${commands.length} guild slash commands for ${guildId}.`
+    );
+  }
 }
 
 /**
@@ -155,22 +165,23 @@ export function registerCommandHandlers(client, ctx) {
  * @param {string} siteUrl
  */
 async function cmdPrices(interaction, siteUrl) {
-  const shop = resolvePublicShopUrl(siteUrl);
+  // ACK within 3s — never let URL/embed quirks cause "application did not respond"
+  await interaction.deferReply({ ephemeral: true });
 
+  const shop = resolvePublicShopUrl(siteUrl);
   const packLines = [];
   const passLines = [];
 
   for (const p of Object.values(PRODUCT_CATALOG)) {
-    const price = `**${formatEuroFromCents(p.priceInCents)}**`;
-    const badge = p.badge ? ` · *${p.badge}*` : "";
+    const price = formatEuroFromCents(p.priceInCents);
+    const badge = p.badge ? ` · ${p.badge}` : "";
 
     if (typeof p.diamonds === "number") {
-      const qty = p.diamonds.toLocaleString("en-GB");
       packLines.push(
-        `${DIAMOND_MARK} **${qty}** Diamonds — ${price}${badge}`
+        `${DIAMOND_MARK} ${p.diamonds.toLocaleString("en-GB")} Diamonds — **${price}**${badge}`
       );
     } else {
-      passLines.push(`✦ **${p.name}** — ${price}${badge}`);
+      passLines.push(`• ${p.name} — **${price}**${badge}`);
     }
   }
 
@@ -181,7 +192,7 @@ async function cmdPrices(interaction, siteUrl) {
     "**Passes**",
     ...passLines,
     "",
-    "Secure Stripe checkout · Instant delivery to your player ID.",
+    "Secure Stripe checkout · Instant delivery.",
   ].join("\n");
 
   const embed = new EmbedBuilder()
@@ -190,42 +201,35 @@ async function cmdPrices(interaction, siteUrl) {
     .setDescription(description)
     .setFooter({ text: "Prices in EUR · European market" });
 
-  if (shop) {
-    embed.setURL(`${shop}/packages`);
-    embed.setThumbnail(`${shop}/discord/bot-icon-f-diamond.png`);
-  }
-
   /** @type {import('discord.js').ActionRowBuilder[]} */
   const components = [];
   if (shop) {
-    components.push(
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setLabel("Open shop")
-          .setStyle(ButtonStyle.Link)
-          .setURL(`${shop}/packages`)
-      )
-    );
+    try {
+      embed.setURL(`${shop}/packages`);
+      components.push(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setLabel("Open shop")
+            .setStyle(ButtonStyle.Link)
+            .setURL(`${shop}/packages`)
+        )
+      );
+    } catch (err) {
+      console.warn("[prices] shop link skipped:", err);
+    }
   }
 
   try {
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [embed],
       components,
-      ephemeral: true,
     });
   } catch (err) {
-    // Link/thumbnail URL issues must not hide the price list.
-    console.error("[prices] rich reply failed, falling back:", err);
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(0xffd700)
-          .setTitle("FastPromo · Prices")
-          .setDescription(description)
-          .setFooter({ text: "Prices in EUR · European market" }),
-      ],
-      ephemeral: true,
+    console.error("[prices] editReply failed, plain fallback:", err);
+    await interaction.editReply({
+      content: description.slice(0, 1900),
+      embeds: [],
+      components: [],
     });
   }
 }
