@@ -8,14 +8,13 @@ import {
   getCashbackWalletCoverPercent,
 } from "@/lib/cashback-config";
 import { getMerchantProfile } from "@/lib/receipt";
+import { DISCORD_SUPPORT_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "FAQ",
   description:
-    "Answers about FastPromo top-ups: IDs, delivery, cashback wallet, creator codes, and Discord support.",
+    "Answers about FastPromo top-ups: IDs, delivery times, refunds, cashback wallet, creator codes, and Discord support.",
 };
-
-const DISCORD = "https://discord.gg/fastpromo";
 
 export default function FaqPage() {
   const cashback = getCashbackPercent();
@@ -33,7 +32,15 @@ export default function FaqPage() {
     },
     {
       q: "How fast is delivery?",
-      a: "Most orders deliver within seconds after Stripe confirms payment. Occasional supplier delays can take longer. If nothing arrives after a few minutes, open a Discord ticket with your Stripe session ID or receipt.",
+      a: "Most orders deliver within seconds after Stripe confirms payment. Occasional supplier or game-side delays can take longer. If nothing arrives after a few minutes, open a Discord ticket or email us with your Stripe session ID or receipt. See Status for operational notes.",
+    },
+    {
+      q: "What if payment succeeded but I got no diamonds?",
+      a: "Wait a few minutes first. Then contact Discord support or email us with your Stripe session ID (cs_…) or receipt number. We investigate failed fulfillments and re-deliver or refund as appropriate. Do not enter a different ID and reorder without checking with support.",
+    },
+    {
+      q: "Can I get a refund?",
+      a: "Digital top-ups that were successfully delivered to the IDs you provided are generally non-refundable (you consent to immediate delivery at checkout). If fulfillment fails after payment, we resolve via re-delivery or refund. Wrong IDs entered by you usually cannot be reversed.",
     },
     {
       q: `How does the ${cashback}% cashback wallet work?`,
@@ -49,7 +56,11 @@ export default function FaqPage() {
     },
     {
       q: "How do I get support?",
-      a: `Primary support is on Discord (${DISCORD.replace("https://", "")}). You can also email ${merchant.supportEmail}. Include your order receipt or Stripe session ID so we can look up the payment quickly.`,
+      a: `Primary support is on Discord (${DISCORD_SUPPORT_URL.replace("https://", "")}). You can also email ${merchant.supportEmail}. Include your order receipt or Stripe session ID so we can look up the payment quickly.`,
+    },
+    {
+      q: "Are you affiliated with the game publisher?",
+      a: "No. FastPromo is an independent reseller. We are not affiliated with or endorsed by Moonton or its games.",
     },
   ];
 
@@ -71,8 +82,8 @@ export default function FaqPage() {
               Frequently asked questions
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-white/55">
-              Straight answers on IDs, delivery, wallet cashback, and support —
-              before you top up.
+              Straight answers on IDs, delivery, refunds, wallet cashback, and
+              support — before you top up.
             </p>
 
             <div className="mt-10 space-y-3">
@@ -102,13 +113,17 @@ export default function FaqPage() {
             <p className="mt-10 text-sm text-white/45">
               Still stuck?{" "}
               <a
-                href={DISCORD}
+                href={DISCORD_SUPPORT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-[#FFD700] hover:underline"
               >
                 Ask on Discord
               </a>
+              {" · "}
+              <Link href="/status" className="font-medium text-[#FFD700] hover:underline">
+                Status
+              </Link>
               {" · "}
               <Link href="/packages" className="font-medium text-[#FFD700] hover:underline">
                 Go to top-up

@@ -1,6 +1,9 @@
-const DISCORD_URL = "https://discord.gg/fastpromo";
+import { DISCORD_SUPPORT_URL } from "@/lib/site";
+import { getMerchantProfile } from "@/lib/receipt";
 
 export function SupportCTA() {
+  const merchant = getMerchantProfile();
+
   return (
     <section
       id="support"
@@ -12,27 +15,33 @@ export function SupportCTA() {
         className="reveal relative mx-auto flex max-w-2xl flex-col items-start text-left sm:items-center sm:text-center"
       >
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFD700]">
-          Always on
+          Support
         </p>
         <h2
           id="support-heading"
           className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl"
         >
-          Real operators. Real-time help.
+          Real operators. Clear next steps.
         </h2>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg">
-          Payment questions, delivery checks, or account troubleshooting — our
-          Discord team monitors tickets around the clock so you never chase a
-          silent inbox.
+          Payment questions, delivery checks, or account troubleshooting —
+          Discord tickets are the fastest path. Include your Stripe session ID
+          or receipt number so we can look up the order quickly.
         </p>
         <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <a
-            href={DISCORD_URL}
+            href={DISCORD_SUPPORT_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-xl bg-[#5865F2] px-6 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFD700]"
           >
             Join Discord Support
+          </a>
+          <a
+            href={`mailto:${merchant.supportEmail}`}
+            className="inline-flex items-center justify-center rounded-xl border border-white/15 px-6 py-3.5 text-sm font-semibold text-white/80 transition-colors duration-300 hover:border-white/30 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Email support
           </a>
           <a
             href="/faq"

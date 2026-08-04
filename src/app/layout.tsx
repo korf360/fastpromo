@@ -3,6 +3,8 @@ import { Cinzel, Outfit } from "next/font/google";
 import { CookieConsent } from "@/components/CookieConsent";
 import { SoftLaunchBanner } from "@/components/SoftLaunchBanner";
 import { Providers } from "@/components/Providers";
+import { getMerchantProfile } from "@/lib/receipt";
+import { DISCORD_SUPPORT_URL, getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -18,9 +20,7 @@ const cinzel = Cinzel({
   weight: ["400", "600", "700"],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-  "https://fastpromo-eta.vercel.app";
+const siteUrl = getSiteUrl();
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -37,13 +37,11 @@ export const metadata: Metadata = {
   },
   description:
     "Automated diamond top-ups with secure Stripe checkout, account history, cashback, and GDPR-ready privacy for European players.",
-  keywords: [
-    "diamonds",
-    "top-up",
-    "FastPromo",
-    "Europe",
-    "Stripe",
-  ],
+  keywords: ["diamonds", "top-up", "FastPromo", "Europe", "Stripe"],
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: [
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
@@ -67,6 +65,9 @@ export const metadata: Metadata = {
     description:
       "Automated diamond delivery for European players. Secure Stripe checkout with cashback rewards.",
   },
+  alternates: {
+    canonical: siteUrl,
+  },
 };
 
 export default function RootLayout({
@@ -74,12 +75,31 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const merchant = getMerchantProfile();
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: merchant.brandName,
+    url: siteUrl,
+    email: merchant.supportEmail,
+    sameAs: [DISCORD_SUPPORT_URL],
+    areaServed: "EU",
+    description:
+      "Automated diamond top-ups for European players with Stripe checkout.",
+  };
+
   return (
     <html
       lang="en"
       className={`${outfit.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-gaming text-white">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
+        />
         <Providers>
           <SoftLaunchBanner />
           {children}

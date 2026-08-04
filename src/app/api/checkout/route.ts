@@ -184,8 +184,8 @@ export async function POST(request: Request) {
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: dbUser.email,
-      // PayPal: enable in Stripe Dashboard first, then add "paypal" here.
-      payment_method_types: ["card", "ideal", "bancontact", "klarna"],
+      // Enable PayPal in Stripe Dashboard → Payment methods if checkout errors.
+      payment_method_types: ["card", "paypal", "ideal", "bancontact", "klarna"],
       line_items: [
         {
           quantity: 1,

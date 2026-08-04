@@ -189,6 +189,58 @@ body {
   font-weight: 600;
 }
 
+.legal-prose code {
+  font-size: 0.85em;
+  color: rgba(255, 215, 0, 0.85);
+}
+
+.legal-table-wrap {
+  margin-top: 0.75rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+.legal-table {
+  width: 100%;
+  min-width: 36rem;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.legal-table th,
+.legal-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legal-table th {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.legal-table td {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.legal-table code {
+  font-size: 0.75rem;
+  color: rgba(255, 215, 0, 0.85);
+  word-break: break-all;
+}
+
+.legal-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 /* Print-friendly receipts */
 @media print {
   header,

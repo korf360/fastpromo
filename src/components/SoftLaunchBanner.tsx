@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
-const STORAGE_KEY = "fp_pilot_banner_dismissed_v1";
+import { PILOT_BANNER_STORAGE_KEY } from "@/lib/cookie-consent";
 
 export function SoftLaunchBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     try {
-      if (localStorage.getItem(STORAGE_KEY) !== "1") setVisible(true);
+      if (localStorage.getItem(PILOT_BANNER_STORAGE_KEY) !== "1") setVisible(true);
     } catch {
       setVisible(true);
     }
@@ -37,7 +36,7 @@ export function SoftLaunchBanner() {
           className="shrink-0 rounded px-2 py-1 text-xs text-white/45 transition-colors hover:text-white/80"
           onClick={() => {
             try {
-              localStorage.setItem(STORAGE_KEY, "1");
+              localStorage.setItem(PILOT_BANNER_STORAGE_KEY, "1");
             } catch {
               /* ignore */
             }
