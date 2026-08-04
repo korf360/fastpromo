@@ -120,7 +120,8 @@ export async function upsertStatusEmbed(guild, apiStatus, gameStatus) {
  * @param {string | null} adminRoleId
  */
 export function startStatusMonitor(client, guildId, adminRoleId) {
-  const INTERVAL_MS = 10 * 60 * 1000;
+  // 25 min — keeps the board fresh without flooding Discord with edits
+  const INTERVAL_MS = 25 * 60 * 1000;
 
   const run = async () => {
     try {
@@ -166,5 +167,5 @@ export function startStatusMonitor(client, guildId, adminRoleId) {
   // Initial delay so ready handlers finish first
   setTimeout(run, 15_000);
   setInterval(run, INTERVAL_MS);
-  console.log("⏱️  MooGold health monitor scheduled every 10 minutes.");
+  console.log("⏱️  MooGold health monitor scheduled every 25 minutes.");
 }
