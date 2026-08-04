@@ -72,6 +72,10 @@ export async function recordOrderAndCashback(input: RecordOrderInput) {
             promoCodeSnapshot,
             promoDiscountCents,
             status: input.status,
+            paidAt:
+              input.status === "paid" || input.status === "fulfilled"
+                ? new Date()
+                : null,
           },
         });
 
@@ -82,6 +86,16 @@ export async function recordOrderAndCashback(input: RecordOrderInput) {
       order = await tx.order.update({
         where: { id: order.id },
         data: { receiptNumber },
+      });
+    }
+
+    if (
+      !order.paidAt &&
+      (input.status === "paid" || input.status === "fulfilled")
+    ) {
+      order = await tx.order.update({
+        where: { id: order.id },
+        data: { paidAt: new Date() },
       });
     }
 
@@ -177,10 +191,34 @@ export async function recordOrderAndCashback(input: RecordOrderInput) {
 
 export async function markOrderStatus(
   stripeSessionId: string,
-  status: "fulfilled" | "failed"
+  status: "fulfilled" | "failed",
+  extras?: {
+    failureReason?: string | null;
+    failureDetail?: string | null;
+    failureCategory?: string | null;
+    moogoldOrderRef?: string | null;
+  }
 ) {
+  const now = new Date();
   return prisma.order.updateMany({
     where: { stripeSessionId },
-    data: { status },
+    data:
+      status === "fulfilled"
+        ? {
+            status,
+            fulfilledAt: now,
+            failedAt: null,
+            failureReason: null,
+            failureDetail: null,
+            failureCategory: null,
+            moogoldOrderRef: extras?.moogoldOrderRef ?? undefined,
+          }
+        : {
+            status,
+            failedAt: now,
+            failureReason: extras?.failureReason ?? undefined,
+            failureDetail: extras?.failureDetail ?? undefined,
+            failureCategory: extras?.failureCategory ?? undefined,
+          },
   });
 }

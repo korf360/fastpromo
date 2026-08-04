@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { PRODUCT_CATALOG, isProductId } from "@/lib/products";
 import { buildReceiptNumber } from "@/lib/receipt";
 import { formatCents } from "@/lib/cashback-config";
+import {
+  adminGuidance,
+  categoryLabel,
+} from "@/lib/order-diagnostics";
 
 type RouteContext = {
   params: Promise<{ transactionId: string }>;
@@ -123,13 +127,18 @@ export async function GET(_request: Request, context: RouteContext) {
 
     if (order) {
       const receiptNumber = await ensureReceipt(order);
+      const paymentCaptured =
+        order.status === "paid" ||
+        order.status === "fulfilled" ||
+        order.status === "failed";
+
       return NextResponse.json({
         ok: true,
         status: mapDbStatus(order.status),
         dbStatus: order.status,
         receiptNumber,
         sessionId: order.stripeSessionId,
-        paymentStatus: null,
+        paymentStatus: paymentCaptured ? "paid" : null,
         sessionStatus: null,
         userId: order.mlbbUserId,
         zoneId: order.mlbbZoneId,
@@ -140,6 +149,31 @@ export async function GET(_request: Request, context: RouteContext) {
         currency: order.currency,
         customerEmail: order.user.email,
         createdAt: order.createdAt.toISOString(),
+        paidAt: order.paidAt?.toISOString() ?? null,
+        fulfilledAt: order.fulfilledAt?.toISOString() ?? null,
+        failedAt: order.failedAt?.toISOString() ?? null,
+        cashbackAppliedCents: order.cashbackAppliedCents,
+        cashbackEarnedCents: order.cashbackEarnedCents,
+        promoCode: order.promoCodeSnapshot,
+        promoDiscountCents: order.promoDiscountCents,
+        moogoldOrderRef: order.moogoldOrderRef,
+        failure: order.status === "failed"
+          ? {
+              category: order.failureCategory,
+              categoryLabel: categoryLabel(order.failureCategory),
+              reason:
+                order.failureReason ||
+                "Order marked failed, but no detailed reason was stored (older order).",
+              detail: order.failureDetail,
+              guidance: adminGuidance(order.failureCategory),
+            }
+          : null,
+        timeline: {
+          created: order.createdAt.toISOString(),
+          paid: order.paidAt?.toISOString() ?? null,
+          fulfilled: order.fulfilledAt?.toISOString() ?? null,
+          failed: order.failedAt?.toISOString() ?? null,
+        },
         source: "database",
       });
     }

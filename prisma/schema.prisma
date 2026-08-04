@@ -79,6 +79,17 @@ model Order {
   currency             String    @default("eur")
   /// pending | paid | fulfilled | failed
   status               String    @default("pending")
+  /// Admin-facing summary of why fulfillment failed (if status = failed)
+  failureReason        String?
+  /// Truncated raw supplier / system detail for support diagnostics
+  failureDetail        String?
+  /// config | supplier | player | network | payment | internal
+  failureCategory      String?
+  /// Supplier order reference when fulfillment succeeds
+  moogoldOrderRef      String?
+  paidAt               DateTime?
+  fulfilledAt          DateTime?
+  failedAt             DateTime?
   receiptNumber        String?   @unique
   receiptEmailedAt     DateTime?
   createdAt            DateTime  @default(now())

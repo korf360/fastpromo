@@ -10,6 +10,7 @@ import {
 import { createMoogoldOrder } from "@/lib/moogold";
 import { notifyBotLogger } from "@/lib/notifyBot";
 import { markOrderStatus, recordOrderAndCashback } from "@/lib/orders";
+import { diagnoseFulfillmentFailure } from "@/lib/order-diagnostics";
 import {
   isProductId,
   PRODUCT_CATALOG,
@@ -144,7 +145,14 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   if (!moogoldProductId) {
     const error = `MooGold SKU env not set for ${product.moogoldEnvKey}.`;
     console.error("[webhook]", error);
-    if (authUserId) await markOrderStatus(session.id, "failed");
+    const diag = diagnoseFulfillmentFailure(error);
+    if (authUserId) {
+      await markOrderStatus(session.id, "failed", {
+        failureReason: diag.reason,
+        failureDetail: diag.detail,
+        failureCategory: diag.category,
+      });
+    }
     await sendDiscordAudit({
       content: buildAdminPing(),
       embeds: [
@@ -175,7 +183,14 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
         result.error,
         result.raw
       );
-      if (authUserId) await markOrderStatus(session.id, "failed");
+      const diag = diagnoseFulfillmentFailure(result.error, result.raw);
+      if (authUserId) {
+        await markOrderStatus(session.id, "failed", {
+          failureReason: diag.reason,
+          failureDetail: diag.detail,
+          failureCategory: diag.category,
+        });
+      }
       await Promise.all([
         sendDiscordAudit({
           content: buildAdminPing(),
@@ -203,9 +218,12 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       return;
     }
 
-    if (authUserId) await markOrderStatus(session.id, "fulfilled");
-
     const moogoldOrderRef = extractOrderRef(result.body);
+    if (authUserId) {
+      await markOrderStatus(session.id, "fulfilled", {
+        moogoldOrderRef: moogoldOrderRef ?? null,
+      });
+    }
 
     await Promise.all([
       sendDiscordAudit({
@@ -234,7 +252,14 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[webhook] MooGold exception:", message);
-    if (authUserId) await markOrderStatus(session.id, "failed");
+    const diag = diagnoseFulfillmentFailure(message);
+    if (authUserId) {
+      await markOrderStatus(session.id, "failed", {
+        failureReason: diag.reason,
+        failureDetail: diag.detail,
+        failureCategory: diag.category,
+      });
+    }
 
     await Promise.all([
       sendDiscordAudit({

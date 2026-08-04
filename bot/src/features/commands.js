@@ -217,6 +217,7 @@ async function cmdOrder(interaction, siteUrl) {
   }
 
   const status = String(data.status || "Unknown");
+  const dbStatus = data.dbStatus ? String(data.dbStatus) : null;
   const color =
     status === "Completed" || status === "Paid"
       ? 0x22c55e
@@ -224,21 +225,41 @@ async function cmdOrder(interaction, siteUrl) {
         ? 0xef4444
         : 0xf59e0b;
 
+  const fmtTime = (iso) => {
+    if (!iso || typeof iso !== "string") return null;
+    try {
+      return `<t:${Math.floor(new Date(iso).getTime() / 1000)}:f>`;
+    } catch {
+      return iso;
+    }
+  };
+
+  const supportId = data.receiptNumber
+    ? String(data.receiptNumber)
+    : isReceipt
+      ? transactionId.toUpperCase()
+      : "—";
+
   const fields = [
+    { name: "Support ID", value: `\`${supportId}\``, inline: true },
     {
-      name: "Support ID",
-      value: data.receiptNumber
-        ? `\`${data.receiptNumber}\``
-        : isReceipt
-          ? `\`${transactionId.toUpperCase()}\``
-          : "—",
+      name: "Pipeline status",
+      value: dbStatus
+        ? `**${status}** · \`${dbStatus}\``
+        : `**${status}** · Stripe only`,
       inline: true,
     },
     {
-      name: "Status",
-      value: data.dbStatus
-        ? `**${status}** (\`${data.dbStatus}\`)`
-        : `**${status}**`,
+      name: "Payment",
+      value:
+        data.paymentStatus === "paid" ||
+        dbStatus === "paid" ||
+        dbStatus === "fulfilled" ||
+        dbStatus === "failed"
+          ? "✅ Captured (Stripe paid)"
+          : data.paymentStatus
+            ? `\`${data.paymentStatus}\``
+            : "—",
       inline: true,
     },
     {
@@ -250,12 +271,12 @@ async function cmdOrder(interaction, siteUrl) {
       name: "Player",
       value:
         data.userId && data.zoneId
-          ? `\`${data.userId}\` (Zone \`${data.zoneId}\`)`
+          ? `\`${data.userId}\` / Zone \`${data.zoneId}\``
           : "—",
       inline: true,
     },
     {
-      name: "Amount",
+      name: "Amount charged",
       value: data.amountFormatted || "—",
       inline: true,
     },
@@ -269,6 +290,107 @@ async function cmdOrder(interaction, siteUrl) {
     });
   }
 
+  if (data.promoCode) {
+    fields.push({
+      name: "Promo",
+      value: `\`${data.promoCode}\`${
+        data.promoDiscountCents
+          ? ` (−${(Number(data.promoDiscountCents) / 100).toFixed(2)} €)`
+          : ""
+      }`,
+      inline: true,
+    });
+  }
+
+  if (data.cashbackAppliedCents > 0 || data.cashbackEarnedCents > 0) {
+    fields.push({
+      name: "Wallet",
+      value: [
+        data.cashbackAppliedCents > 0
+          ? `Applied ${(Number(data.cashbackAppliedCents) / 100).toFixed(2)} €`
+          : null,
+        data.cashbackEarnedCents > 0
+          ? `Earned +${(Number(data.cashbackEarnedCents) / 100).toFixed(2)} €`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      inline: true,
+    });
+  }
+
+  if (data.moogoldOrderRef) {
+    fields.push({
+      name: "Supplier order",
+      value: `\`${data.moogoldOrderRef}\``,
+      inline: true,
+    });
+  }
+
+  const timelineBits = [
+    data.timeline?.created || data.createdAt
+      ? `Created ${fmtTime(data.timeline?.created || data.createdAt)}`
+      : null,
+    data.timeline?.paid ? `Paid ${fmtTime(data.timeline.paid)}` : null,
+    data.timeline?.fulfilled
+      ? `Delivered ${fmtTime(data.timeline.fulfilled)}`
+      : null,
+    data.timeline?.failed ? `Failed ${fmtTime(data.timeline.failed)}` : null,
+  ].filter(Boolean);
+
+  if (timelineBits.length) {
+    fields.push({
+      name: "Timeline",
+      value: timelineBits.join("\n"),
+      inline: false,
+    });
+  }
+
+  if (data.failure) {
+    fields.push({
+      name: "⚠ Failure diagnosis",
+      value: [
+        `**Category:** ${data.failure.categoryLabel || data.failure.category || "Unknown"}`,
+        `**Why:** ${data.failure.reason || "No reason stored"}`,
+        data.failure.guidance
+          ? `**Admin next step:** ${data.failure.guidance}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n")
+        .slice(0, 1024),
+      inline: false,
+    });
+
+    if (data.failure.detail) {
+      fields.push({
+        name: "Raw supplier / system detail",
+        value: `\`\`\`\n${String(data.failure.detail).slice(0, 900)}\n\`\`\``,
+        inline: false,
+      });
+    }
+  } else if (dbStatus === "failed") {
+    fields.push({
+      name: "⚠ Failure diagnosis",
+      value:
+        "Marked **failed**, but no diagnostic was stored (likely an older order). Check Vercel webhook logs for this Stripe session.",
+      inline: false,
+    });
+  } else if (dbStatus === "paid") {
+    fields.push({
+      name: "Delivery note",
+      value:
+        "Payment captured; diamonds not marked delivered yet. May still be processing — re-check in a minute or inspect webhook logs.",
+      inline: false,
+    });
+  } else if (dbStatus === "fulfilled") {
+    fields.push({
+      name: "Delivery note",
+      value: "Marked delivered successfully. If the player still missing diamonds, verify User/Zone ID and supplier order ref.",
+      inline: false,
+    });
+  }
+
   if (data.sessionId) {
     fields.push({
       name: "Stripe session",
@@ -277,13 +399,27 @@ async function cmdOrder(interaction, siteUrl) {
     });
   }
 
+  const titlePrefix =
+    status === "Failed"
+      ? "Order failed"
+      : status === "Completed"
+        ? "Order delivered"
+        : status === "Paid"
+          ? "Order paid — awaiting delivery"
+          : "Order lookup";
+
   const embed = new EmbedBuilder()
     .setColor(color)
-    .setTitle(`Order · ${status}`)
+    .setTitle(`${titlePrefix} · ${supportId}`)
     .setDescription(
-      "Share this embed with the ticket. User support IDs live under Account → Purchase activity."
+      status === "Failed"
+        ? "Payment may still be captured. Use the diagnosis below before refunding or re-delivering."
+        : "Support report for Discord tickets. Source: Account → Purchase activity Support ID."
     )
     .addFields(fields)
+    .setFooter({
+      text: `Source: ${data.source || "unknown"} · FastPromo admin lookup`,
+    })
     .setTimestamp(data.createdAt ? new Date(data.createdAt) : undefined);
 
   await interaction.editReply({ embeds: [embed] });
