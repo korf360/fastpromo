@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { TopUpFlow } from "@/components/TopUpFlow";
-import { ScrollEffects } from "@/components/ScrollEffects";
 import { PRODUCT_CATALOG } from "@/lib/products";
 
 export const metadata: Metadata = {
@@ -16,11 +15,10 @@ export default function PackagesPage() {
 
   return (
     <>
-      <ScrollEffects />
       <Header />
       <main className="relative flex-1 bg-[#0d0f12]">
         <section className="relative px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12 lg:pt-20">
-          <div data-reveal className="reveal mx-auto max-w-6xl">
+          <div className="mx-auto max-w-6xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFD700]">
               Top-Up
             </p>
@@ -60,9 +58,7 @@ export default function PackagesPage() {
           <h2 id="packages-topup-heading" className="sr-only">
             Select a package and check out
           </h2>
-          <div data-reveal className="reveal">
-            <TopUpFlow />
-          </div>
+          <TopUpFlow />
         </section>
       </main>
       <Footer />
