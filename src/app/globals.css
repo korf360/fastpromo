@@ -44,9 +44,8 @@ body {
 .bg-gaming {
   background-color: #0d0f12;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 215, 0, 0.07), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(255, 215, 0, 0.03), transparent),
-    radial-gradient(ellipse 50% 30% at 0% 80%, rgba(100, 120, 160, 0.06), transparent),
+    radial-gradient(ellipse 70% 40% at 50% -30%, rgba(255, 255, 255, 0.04), transparent),
+    radial-gradient(ellipse 50% 30% at 0% 80%, rgba(100, 120, 160, 0.05), transparent),
     linear-gradient(180deg, #0d0f12 0%, #0a0c0f 100%);
 }
 

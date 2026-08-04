@@ -18,9 +18,9 @@ export default function PackagesPage() {
     <>
       <ScrollEffects />
       <Header />
-      <main className="relative flex-1">
-        <section className="relative border-b border-white/5 px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-14 lg:pt-20">
-          <div data-reveal className="reveal relative mx-auto max-w-6xl">
+      <main className="relative flex-1 bg-[#0d0f12]">
+        <section className="relative px-4 pb-8 pt-12 sm:px-6 sm:pb-10 sm:pt-16 lg:px-8 lg:pb-12 lg:pt-20">
+          <div data-reveal className="reveal mx-auto max-w-6xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FFD700]">
               Top-Up
             </p>
@@ -54,7 +54,7 @@ export default function PackagesPage() {
 
         <section
           id="top-up"
-          className="relative scroll-mt-24 px-4 py-12 sm:px-6 lg:px-8 lg:py-16"
+          className="relative scroll-mt-24 px-4 pb-12 pt-2 sm:px-6 sm:pb-16 sm:pt-4 lg:px-8 lg:pb-20"
           aria-labelledby="packages-topup-heading"
         >
           <h2 id="packages-topup-heading" className="sr-only">

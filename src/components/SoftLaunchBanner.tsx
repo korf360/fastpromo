@@ -19,7 +19,7 @@ export function SoftLaunchBanner() {
 
   return (
     <div
-      className="relative z-[45] border-b border-[#FFD700]/20 bg-[#151208] px-4 py-2.5 sm:px-6"
+      className="relative z-[45] border-b border-white/10 bg-[#0d0f12] px-4 py-2.5 sm:px-6"
       role="status"
     >
       <div className="mx-auto flex max-w-6xl items-start gap-3 sm:items-center sm:justify-between">
