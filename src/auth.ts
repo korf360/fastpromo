@@ -73,6 +73,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.sub = user.id;
       }
 
+      if (user?.email) {
+        token.email = user.email.toLowerCase().trim();
+      }
+
       // OAuth first login: adapter user id is on user.id; ensure email is lowercased in DB.
       if (account?.provider === "google" && user?.email && user.id) {
         const email = user.email.toLowerCase().trim();
@@ -96,13 +100,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (dbUser) {
           token.cashbackCents = dbUser.cashbackCents;
-          token.email = dbUser.email;
+          token.email = dbUser.email.toLowerCase().trim();
           token.name = dbUser.name;
-          token.isAdmin = isAdminEmail(dbUser.email);
-        } else {
-          token.isAdmin = false;
         }
       }
+
+      // Owner email (korf360@gmail.com) + ADMIN_EMAILS — works for Google and password login.
+      token.isAdmin = isAdminEmail(
+        typeof token.email === "string" ? token.email : undefined
+      );
 
       return token;
     },

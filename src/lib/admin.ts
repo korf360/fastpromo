@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 
-/** Hardcoded primary owner — always treated as admin. */
+/** Hardcoded primary owner — always treated as admin (password or Google). */
 export const PRIMARY_ADMIN_EMAIL = "korf360@gmail.com";
 
 export function getAdminEmails(): string[] {
