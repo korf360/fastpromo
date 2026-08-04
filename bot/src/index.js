@@ -42,18 +42,18 @@ async function main() {
     guildId: env.guildId,
   });
 
+  // Listen for Railway healthchecks before Discord "ready" (login can take seconds).
+  startExpressServer(client, {
+    guildId: env.guildId,
+    adminRoleId: env.adminRoleId,
+    port: env.port,
+    internalWebhookSecret: env.internalWebhookSecret,
+  });
+
   client.once("ready", async () => {
     console.log(`🤖 FastPromo bot online as ${client.user?.tag}`);
     console.log(`📍 Target guild: ${env.guildId}`);
     console.log(`🌐 Shop URL: ${env.siteUrl}`);
-
-    // Start HTTP ASAP so Railway health checks pass even if Discord setup is slow.
-    startExpressServer(client, {
-      guildId: env.guildId,
-      adminRoleId: env.adminRoleId,
-      port: env.port,
-      internalWebhookSecret: env.internalWebhookSecret,
-    });
 
     try {
       await registerSlashCommands(env.clientId, env.token, env.guildId);
